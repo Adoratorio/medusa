@@ -1,0 +1,29 @@
+{
+  "name": "@adoratorio/medusa",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf ./dist && mkdir ./dist && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adoratorio/medusa.git"
+  },
+  "keywords": [
+    "IntersectionObserve",
+    "intesection",
+    "inViewport",
+    "lazy"
+  ],
+  "author": "Adoratorio <contact@adoratorio.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Adoratorio/medusa/issues"
+  },
+  "homepage": "https://github.com/Adoratorio/medusa#readme",
+  "devDependencies": {
+    "typescript": "^3.3.4000"
+  }
+}
