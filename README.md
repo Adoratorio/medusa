@@ -64,7 +64,40 @@ TargetOject definition:
 
 ## APIs
 
-### addTarget
-### removeTarget
-### pushToTarget
-### pullFromTarget
+### addTarget()
+To add a new target you have to create a specific object with this structure.
+```js
+interface Target = {
+  id : string,
+  container: Document | HTMLElement,
+  nodes : Array<HTMLElement> | string,
+  threshold : number,
+  offsets : string,
+  emitGlobal : boolean,
+  callback : Function,
+  mode : MODE,
+};
+```
+
+And then you have to pass it to the method
+```js
+Medusa.addTarget(target : Array<Target> | Target);
+```
+
+### removeTarget()
+To remove a specific target you have to know what is the id, and then pass it to the method.
+```js
+Medusa.removeTarget('targetId' : string);
+```
+
+### pushToTarget()
+To add a single node or an array of nodes, you have to pass the targetId of the observer already created, and the node/nodes that you want to add;
+```js
+Medusa.pushToTarget('targetId' : string, elToAdd : HTMLElement | Array<HTMLElement>);
+```
+
+### pullFromTarget()
+To remove a single node or an array of nodes, you have to pass the targetId of the observer and the node/nodes that you want to remove;
+```js
+Medusa.pullFromTarget('targetId' : string, elToRemove : HTMLElement | Array<HTMLElement>);
+```

@@ -10,16 +10,16 @@ export enum THRESHOLD {
   BEARLY = 0.0,
 }
 
-export interface Target {
-  id : string,
-  container: Document | HTMLElement,
-  nodes : Array<HTMLElement> | string,
-  threshold : number,
-  offsets: string,
-  emitGlobal : boolean,
-  callback : Function,
-  mode : MODE,
-}
+  export interface Target {
+    id : string,
+    container: Document | HTMLElement,
+    nodes : Array<HTMLElement> | string,
+    threshold : number,
+    offsets: string,
+    emitGlobal : boolean,
+    callback : Function,
+    mode : MODE,
+  }
 
 export interface InternalTarget {
   id : string,

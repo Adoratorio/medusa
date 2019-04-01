@@ -131,22 +131,38 @@ class Medusa {
     }
   }
 
-  pullFromTarget(idObserver : string, elToRemove : HTMLElement) {
+  pullFromTarget(idObserver : string, elToRemove : HTMLElement | Array<HTMLElement>) {
     const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
 
     if (indexTarget < 0) {
       console.warn('The targets id doesn\'t exist');
     } else {
-      const medusaId = (<any>elToRemove).medusaId;
-      const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement).medusaId === medusaId);
+      const observer = this.internalTargets[indexTarget].observerInstance as IntersectionObserver;
 
-      if (elIndexToRemove < 0) {
-        console.warn('The element isn\'t observed');
+      if (Array.isArray(elToRemove)) {
+        elToRemove.forEach((node) => {
+          const medusaId = (<any>elToRemove).medusaId;
+          const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement).medusaId === medusaId);
+
+          if (elIndexToRemove < 0) {
+            console.warn('The element isn\'t observed');
+          } else {
+            observer.unobserve(node);
+            this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
+          }
+        });
       } else {
-        const observer = this.internalTargets[indexTarget].observerInstance as IntersectionObserver;
-        observer.unobserve(elToRemove);
-        this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
+        const medusaId = (<any>elToRemove).medusaId;
+        const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement).medusaId === medusaId);
+
+        if (elIndexToRemove < 0) {
+          console.warn('The element isn\'t observed');
+        } else {
+          observer.unobserve(elToRemove);
+          this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
+        }
       }
+      
     }
   }
 
