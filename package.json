@@ -3,8 +3,14 @@
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "build": "rm -rf ./dist && mkdir ./dist && tsc",
+    "build-umd": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,6 +24,11 @@
     "lazy"
   ],
   "author": "Adoratorio <contact@adoratorio.com>",
+  "contributors": [
+    "Andrea Gottardi <andrea@adoratorio.com>",
+    "Daniele Borra <daniele@adoratorio.com>",
+    "Tommaso Algozzino <tommaso@adoratorio.com>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Adoratorio/medusa/issues"
@@ -25,5 +36,8 @@
   "homepage": "https://github.com/Adoratorio/medusa#readme",
   "devDependencies": {
     "typescript": "^3.3.4000"
+  },
+  "dependencies": {
+    "@types/node": "^11.12.0"
   }
 }

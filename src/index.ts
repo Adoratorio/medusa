@@ -10,6 +10,9 @@ import {
 
 import { thresholdsByPixels } from './utils';
 
+const crypto = require('crypto');
+
+
 class Medusa {
   static MODE = MODE;
 
@@ -26,8 +29,8 @@ class Medusa {
       targets: {
         id: 'snakes',
         container: document.body,
-        nodes: Array.from(document.querySelectorAll('.m-snakes')),
-        threshold: Medusa.THRESHOLD.TOP,
+        nodes: '.m-snake',
+        threshold: Medusa.THRESHOLD.FULL,
         offsets: '',
         emitGlobal: false,
         callback: () => {},
@@ -37,10 +40,27 @@ class Medusa {
 
     this.options = { ...defaults, ...options };
 
-    this.addTargets(this.options.targets);
+    this.init();
   }
 
-  addTargets(newTargets : Array<PartialTarget> | PartialTarget) {
+  private init() {
+    Object.defineProperty(HTMLElement.prototype, 'medusaId', {
+      value: '',
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      get() {
+        return this.medusaId;
+      },
+      set(val) {
+        this.medusaId = val;
+      },
+    });
+
+    this.addTarget(this.options.targets);
+  }
+
+  addTarget(newTargets : Array<PartialTarget> | PartialTarget) {
     if (Array.isArray(newTargets)) {
       newTargets.forEach((newTarget) => {
         const partialTarget = newTarget as Target;
@@ -55,9 +75,7 @@ class Medusa {
     } else if (typeof newTargets === 'object') {
       const target = newTargets as Target;
 
-      if (this.idList.findIndex((id) => {
-        return id === target.id;
-      }) < 0) {
+      if (this.idList.findIndex(id => id === target.id) < 0) {
         this.internalTargets.push(this.createInternalTarget(target));
         this.idList.push(target.id);
       } else {
@@ -68,25 +86,99 @@ class Medusa {
     }
   }
 
+  removeTarget(targetId : string) {
+    const indexTargetToRemove = this.internalTargets.findIndex(target => target.id === targetId);
+
+    if (indexTargetToRemove < 0) {
+      console.warn('The targets id doesn\'t exist');
+    } else {
+      const currentTarget = this.internalTargets[indexTargetToRemove];
+
+      currentTarget.observedElements.forEach((node, i) => {
+        (<IntersectionObserver>currentTarget.observerInstance).unobserve(node);
+        currentTarget.observedElements.splice(i, 1);
+      })
+
+      if (currentTarget.observedElements.length === 0) {
+        (<IntersectionObserver>currentTarget.observerInstance).disconnect();
+        currentTarget.observerInstance = null;
+        this.internalTargets.splice(indexTargetToRemove, 1);
+
+        this.idList.filter(id => id !== targetId);
+      }
+    }
+  }
+
+  pushToTarget(idObserver : string, elToAdd : HTMLElement | Array<HTMLElement>) {
+    const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
+
+    if (indexTarget < 0) {
+      console.warn('The targets id doesn\'t exist');
+    } else {
+      if (Array.isArray(elToAdd)) {
+        elToAdd.forEach((node) => {
+          (<any>node).medusaId = crypto.randomBytes(6).toString('hex');
+
+          (<IntersectionObserver>this.internalTargets[indexTarget].observerInstance).observe(node);
+          this.internalTargets[indexTarget].observedElements.push(node);
+        });
+      } else {
+        (<any>elToAdd).medusaId = crypto.randomBytes(6).toString('hex');
+
+        (<IntersectionObserver>this.internalTargets[indexTarget].observerInstance).observe(elToAdd);
+        this.internalTargets[indexTarget].observedElements.push(elToAdd);
+      }
+    }
+  }
+
+  pullFromTarget(idObserver : string, elToRemove : HTMLElement) {
+    const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
+
+    if (indexTarget < 0) {
+      console.warn('The targets id doesn\'t exist');
+    } else {
+      const medusaId = (<any>elToRemove).medusaId;
+      const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement).medusaId === medusaId);
+
+      if (elIndexToRemove < 0) {
+        console.warn('The element isn\'t observed');
+      } else {
+        const observer = this.internalTargets[indexTarget].observerInstance as IntersectionObserver;
+        observer.unobserve(elToRemove);
+        this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
+      }
+    }
+  }
+
   private createInternalTarget(optionsTarget : Target) {
     const internalTarget : InternalTarget = {
       id: optionsTarget.id,
       observerInstance: null,
       observedElements: [],
+      observerOptions: {
+        root: null,
+        rootMargin: optionsTarget.offsets,
+        threshold: optionsTarget.mode === Medusa.MODE.BYPIXELS
+          ? thresholdsByPixels() : optionsTarget.threshold,
+      },
+      emitGlobal: optionsTarget.emitGlobal,
+      container: optionsTarget.container,
+      mode: optionsTarget.mode,
+      callback: optionsTarget.callback,
     };
 
     if (Array.isArray(optionsTarget.nodes)) {
       internalTarget.observedElements = optionsTarget.nodes;
 
       // TODO fallback observer
-      this.createObserver(internalTarget, optionsTarget);
+      this.createObserver(internalTarget);
     } else if (typeof optionsTarget.nodes === 'string') {
       internalTarget.observedElements = Array.from(
         optionsTarget.container.querySelectorAll(optionsTarget.nodes),
       );
 
       // TODO fallback observer
-      this.createObserver(internalTarget, optionsTarget);
+      this.createObserver(internalTarget);
     } else {
       console.warn(`the node list for the target id: ${optionsTarget.id} is invalid, no observer was added`);
     }
@@ -94,17 +186,10 @@ class Medusa {
     return internalTarget;
   }
 
-  private createObserver(internalTargetCreated : InternalTarget, optionsTarget : Target) {
-    const observerOptions : any = {
-      root: null,
-      rootMargin: optionsTarget.offsets,
-      threshold: optionsTarget.mode === Medusa.MODE.BYPIXELS
-        ? thresholdsByPixels() : optionsTarget.threshold,
-    };
-
+  private createObserver(internalTargetCreated : InternalTarget) {
     const callback = (entries : IntersectionObserverEntry[], observer : IntersectionObserver) => {
       entries.forEach((entry) => {
-        if (optionsTarget.mode === Medusa.MODE.ONCE && entry.isIntersecting) {
+        if (internalTargetCreated.mode === Medusa.MODE.ONCE && entry.isIntersecting) {
           observer.unobserve(entry.target);
 
           const indexToRemove = internalTargetCreated.observedElements
@@ -114,25 +199,29 @@ class Medusa {
           if (internalTargetCreated.observedElements.length === 0) {
             observer.disconnect();
             internalTargetCreated.observerInstance = null;
+            const internalTargetCreatedIndex = this.internalTargets.findIndex((internalTarget) => internalTarget.id === internalTargetCreated.id);
+            this.internalTargets.splice(internalTargetCreatedIndex, 1);
           }
         }
 
-        const eventTarget = optionsTarget.emitGlobal ? window : optionsTarget.container;
+        const eventTarget = internalTargetCreated.emitGlobal ? window : internalTargetCreated.container;
         const customEvent = new CustomEvent('intesectionTriggered', <MedusaEventInit>{
-          id: optionsTarget.id,
+          id: internalTargetCreated.id,
           detail: entry,
           isIn: entry.isIntersecting,
         });
         eventTarget.dispatchEvent(customEvent);
 
-        if (entry.isIntersecting) optionsTarget.callback(entry, observer);
+        if (entry.isIntersecting) internalTargetCreated.callback(entry, observer);
       });
     };
 
-    internalTargetCreated.observerInstance = new IntersectionObserver(callback, observerOptions);
+    internalTargetCreated.observerInstance = new IntersectionObserver(callback, internalTargetCreated.observerOptions);
 
     internalTargetCreated.observedElements.forEach((node : HTMLElement) => {
       if (internalTargetCreated.observerInstance === null) return;
+
+      (<any>node).medusaId = crypto.randomBytes(6).toString('hex');
 
       internalTargetCreated.observerInstance.observe(node);
     });

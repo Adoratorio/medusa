@@ -5,9 +5,9 @@ export enum MODE {
 }
 
 export enum THRESHOLD {
-  TOP = 1.0,
-  CENTER = 0.5,
-  BOTTOM = 0.0,
+  FULL = 1.0,
+  HALF = 0.5,
+  BEARLY = 0.0,
 }
 
 export interface Target {
@@ -23,8 +23,13 @@ export interface Target {
 
 export interface InternalTarget {
   id : string,
-  observerInstance: null | IntersectionObserver,
-  observedElements: Array<HTMLElement>,
+  observerInstance : null | IntersectionObserver,
+  observedElements : Array<HTMLElement>,
+  observerOptions : object,
+  emitGlobal : boolean,
+  container : Document | HTMLElement,
+  mode : MODE,
+  callback : Function,
 }
 
 export interface MedusaEventInit extends CustomEventInit {
