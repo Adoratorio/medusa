@@ -49,12 +49,6 @@ class Medusa {
       configurable: true,
       enumerable: true,
       writable: true,
-      get() {
-        return this.medusaId;
-      },
-      set(val) {
-        this.medusaId = val;
-      },
     });
 
     this.addTarget(this.options.targets);
