@@ -73,7 +73,7 @@ class Medusa {
         this.internalTargets.push(this.createInternalTarget(target));
         this.idList.push(target.id);
       } else {
-        throw new Error(`The target id-key: '${target}', already exist`);
+        throw new Error(`The target id-key: '${target.id}', already exist`);
       }
     } else {
       console.warn(`The targets is uncorrect`);
@@ -99,6 +99,7 @@ class Medusa {
         this.internalTargets.splice(indexTargetToRemove, 1);
 
         this.idList.filter(id => id !== targetId);
+        this.internalTargets = this.internalTargets.filter(target => target.id !== targetId);
       }
     }
   }
