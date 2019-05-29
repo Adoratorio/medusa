@@ -156,7 +156,6 @@ class Medusa {
           this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
         }
       }
-      
     }
   }
 
@@ -211,6 +210,9 @@ class Medusa {
             internalTargetCreated.observerInstance = null;
             const internalTargetCreatedIndex = this.internalTargets.findIndex((internalTarget) => internalTarget.id === internalTargetCreated.id);
             this.internalTargets.splice(internalTargetCreatedIndex, 1);
+
+            const idListIndex = this.idList.findIndex(id => id === internalTargetCreated.id);
+            this.idList.splice(idListIndex, 1);
           }
         }
 
