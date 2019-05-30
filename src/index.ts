@@ -97,10 +97,10 @@ class Medusa {
         (<IntersectionObserver>currentTarget.observerInstance).disconnect();
         currentTarget.observerInstance = null;
         this.internalTargets.splice(indexTargetToRemove, 1);
-
-        this.idList.filter(id => id !== targetId);
-        this.internalTargets = this.internalTargets.filter(target => target.id !== targetId);
       }
+
+      this.idList = this.idList.filter(id => id !== targetId);
+      this.internalTargets = this.internalTargets.filter(target => target.id !== targetId);
     }
   }
 
