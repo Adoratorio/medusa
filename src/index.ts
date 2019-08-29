@@ -31,7 +31,7 @@ class Medusa {
         container: document.body,
         nodes: '.m-snake',
         threshold: Medusa.THRESHOLD.FULL,
-        offsets: '',
+        offsets: '0px 0px 0px 0px',
         emitGlobal: false,
         callback: () => {},
         mode: Medusa.MODE.DEFAULT,
