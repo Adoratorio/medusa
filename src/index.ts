@@ -35,6 +35,7 @@ class Medusa {
         emitGlobal: false,
         callback: () => {},
         mode: Medusa.MODE.DEFAULT,
+        autoremove: true,
       },
     };
 
@@ -175,6 +176,7 @@ class Medusa {
       container: optionsTarget.container,
       mode: optionsTarget.mode,
       callback: optionsTarget.callback,
+      autoremove: optionsTarget.autoremove,
     };
 
     if (Array.isArray(optionsTarget.nodes)) {
@@ -206,7 +208,7 @@ class Medusa {
             .findIndex(observedElement => observedElement === entry.target);
           internalTargetCreated.observedElements.splice(indexToRemove, 1);
 
-          if (internalTargetCreated.observedElements.length === 0) {
+          if (internalTargetCreated.observedElements.length === 0 && internalTargetCreated.autoremove) {
             observer.disconnect();
             internalTargetCreated.observerInstance = null;
             const internalTargetCreatedIndex = this.internalTargets.findIndex((internalTarget) => internalTarget.id === internalTargetCreated.id);

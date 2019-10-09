@@ -19,6 +19,7 @@ export enum THRESHOLD {
     emitGlobal : boolean,
     callback : Function,
     mode : MODE,
+    autoremove : boolean,
   }
 
 export interface InternalTarget {
@@ -30,6 +31,7 @@ export interface InternalTarget {
   container : Document | HTMLElement,
   mode : MODE,
   callback : Function,
+  autoremove : boolean,
 }
 
 export interface MedusaEventInit extends CustomEventInit {
