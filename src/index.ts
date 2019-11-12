@@ -227,7 +227,7 @@ class Medusa {
         });
         eventTarget.dispatchEvent(customEvent);
 
-        if (entry.isIntersecting) internalTargetCreated.callback(entry, observer);
+        if (internalTargetCreated.mode !== Medusa.MODE.ONCE) internalTargetCreated.callback(entry, observer);
       });
     };
 
