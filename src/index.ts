@@ -6,6 +6,7 @@ import {
   MedusaEventInit,
   MedusaOptions,
   PartialTarget,
+  MedusaHTMLElement,
 } from './declarations';
 
 import { thresholdsByPixels } from './utils';
@@ -37,6 +38,7 @@ class Medusa {
         mode: Medusa.MODE.DEFAULT,
         autoremove: true,
       },
+      debug: true,
     };
 
     this.options = { ...defaults, ...options };
@@ -45,7 +47,7 @@ class Medusa {
   }
 
   private init() {
-    Object.defineProperty(HTMLElement.prototype, 'medusaId', {
+    Object.defineProperty(HTMLElement.prototype, '_medusaId', {
       value: '',
       configurable: true,
       enumerable: true,
@@ -77,7 +79,7 @@ class Medusa {
         throw new Error(`The target id-key: '${target.id}', already exist`);
       }
     } else {
-      console.warn(`The targets is uncorrect`);
+      if (this.options.debug) console.warn(`The targets is uncorrect`);
     }
   }
 
@@ -85,7 +87,7 @@ class Medusa {
     const indexTargetToRemove = this.internalTargets.findIndex(target => target.id === targetId);
 
     if (indexTargetToRemove < 0) {
-      console.warn('The targets id doesn\'t exist');
+      if (this.options.debug) console.warn('The targets id doesn\'t exist');
     } else {
       const currentTarget = this.internalTargets[indexTargetToRemove];
 
@@ -109,17 +111,17 @@ class Medusa {
     const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
 
     if (indexTarget < 0) {
-      console.warn('The targets id doesn\'t exist');
+      if (this.options.debug) console.warn('The targets id doesn\'t exist');
     } else {
       if (Array.isArray(elToAdd)) {
         elToAdd.forEach((node) => {
-          (<any>node).medusaId = crypto.randomBytes(6).toString('hex');
+          (<any>node)._medusaId = crypto.randomBytes(6).toString('hex');
 
           (<IntersectionObserver>this.internalTargets[indexTarget].observerInstance).observe(node);
           this.internalTargets[indexTarget].observedElements.push(node);
         });
       } else {
-        (<any>elToAdd).medusaId = crypto.randomBytes(6).toString('hex');
+        (<any>elToAdd)._medusaId = crypto.randomBytes(6).toString('hex');
 
         (<IntersectionObserver>this.internalTargets[indexTarget].observerInstance).observe(elToAdd);
         this.internalTargets[indexTarget].observedElements.push(elToAdd);
@@ -131,28 +133,28 @@ class Medusa {
     const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
 
     if (indexTarget < 0) {
-      console.warn('The targets id doesn\'t exist');
+      if (this.options.debug) console.warn('The targets id doesn\'t exist');
     } else {
       const observer = this.internalTargets[indexTarget].observerInstance as IntersectionObserver;
 
       if (Array.isArray(elToRemove)) {
         elToRemove.forEach((node) => {
-          const medusaId = (<any>elToRemove).medusaId;
-          const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement).medusaId === medusaId);
+          const { _medusaId } = (<MedusaHTMLElement>node);
+          const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement)._medusaId === _medusaId);
 
           if (elIndexToRemove < 0) {
-            console.warn('The element isn\'t observed');
+            if (this.options.debug) console.warn('The element isn\'t observed');
           } else {
             observer.unobserve(node);
             this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
           }
         });
       } else {
-        const medusaId = (<any>elToRemove).medusaId;
-        const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement).medusaId === medusaId);
+        const { _medusaId } = (<MedusaHTMLElement>elToRemove);
+        const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<MedusaHTMLElement>observedElement)._medusaId === _medusaId);
 
         if (elIndexToRemove < 0) {
-          console.warn('The element isn\'t observed');
+          if (this.options.debug) console.warn('The element isn\'t observed');
         } else {
           observer.unobserve(elToRemove);
           this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
@@ -192,7 +194,7 @@ class Medusa {
       // TODO fallback observer
       this.createObserver(internalTarget);
     } else {
-      console.warn(`the node list for the target id: ${optionsTarget.id} is invalid, no observer was added`);
+      if (this.options.debug) console.warn(`the node list for the target id: ${optionsTarget.id} is invalid, no observer was added`);
     }
 
     return internalTarget;
@@ -238,7 +240,7 @@ class Medusa {
     internalTargetCreated.observedElements.forEach((node : HTMLElement) => {
       if (internalTargetCreated.observerInstance === null) return;
 
-      (<any>node).medusaId = crypto.randomBytes(6).toString('hex');
+      (<any>node)._medusaId = crypto.randomBytes(6).toString('hex');
 
       internalTargetCreated.observerInstance.observe(node);
     });

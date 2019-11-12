@@ -10,17 +10,17 @@ export enum THRESHOLD {
   BEARLY = 0.0,
 }
 
-  export interface Target {
-    id : string,
-    container: Document | HTMLElement,
-    nodes : Array<HTMLElement> | string,
-    threshold : number,
-    offsets: string,
-    emitGlobal : boolean,
-    callback : Function,
-    mode : MODE,
-    autoremove : boolean,
-  }
+export interface Target {
+  id : string,
+  container: Document | HTMLElement,
+  nodes : Array<HTMLElement> | string,
+  threshold : number,
+  offsets: string,
+  emitGlobal : boolean,
+  callback : Function,
+  mode : MODE,
+  autoremove : boolean,
+}
 
 export interface InternalTarget {
   id : string,
@@ -42,9 +42,14 @@ export type PartialTarget = Partial<Target>
 
 export interface MedusaOptions {
   targets : Array<PartialTarget> | PartialTarget,
+  debug?: boolean,
 }
 
 export interface MedusaObserver {
   node : HTMLElement,
   instance : IntersectionObserver,
+}
+
+export interface MedusaHTMLElement extends HTMLElement {
+  _medusaId : string,
 }
