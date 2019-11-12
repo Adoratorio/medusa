@@ -219,7 +219,7 @@ class Medusa {
           }
 
           internalTargetCreated.callback(entry, observer);
-        } else {
+        } else if (internalTargetCreated.mode !== Medusa.MODE.ONCE) {
           internalTargetCreated.callback(entry, observer);
         }
 
