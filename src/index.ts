@@ -217,6 +217,10 @@ class Medusa {
             const idListIndex = this.idList.findIndex(id => id === internalTargetCreated.id);
             this.idList.splice(idListIndex, 1);
           }
+
+          internalTargetCreated.callback(entry, observer);
+        } else {
+          internalTargetCreated.callback(entry, observer);
         }
 
         const eventTarget = internalTargetCreated.emitGlobal ? window : internalTargetCreated.container;
@@ -226,8 +230,6 @@ class Medusa {
           isIn: entry.isIntersecting,
         });
         eventTarget.dispatchEvent(customEvent);
-
-        if (internalTargetCreated.mode !== Medusa.MODE.ONCE) internalTargetCreated.callback(entry, observer);
       });
     };
 
