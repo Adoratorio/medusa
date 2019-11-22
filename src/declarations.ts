@@ -13,7 +13,7 @@ export enum THRESHOLD {
 export interface Target {
   id : string,
   container: Document | HTMLElement,
-  nodes : Array<HTMLElement> | string,
+  nodes : Array<MedusaHTMLElement> | string,
   threshold : number,
   offsets: string,
   emitGlobal : boolean,
@@ -25,7 +25,7 @@ export interface Target {
 export interface InternalTarget {
   id : string,
   observerInstance : null | IntersectionObserver,
-  observedElements : Array<HTMLElement>,
+  observedElements : Array<MedusaHTMLElement>,
   observerOptions : object,
   emitGlobal : boolean,
   container : Document | HTMLElement,

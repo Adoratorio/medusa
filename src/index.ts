@@ -107,7 +107,7 @@ class Medusa {
     }
   }
 
-  pushToTarget(idObserver : string, elToAdd : HTMLElement | Array<HTMLElement>) {
+  pushToTarget(idObserver : string, elToAdd : MedusaHTMLElement | Array<MedusaHTMLElement>) {
     const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
 
     if (indexTarget < 0) {
@@ -129,7 +129,7 @@ class Medusa {
     }
   }
 
-  pullFromTarget(idObserver : string, elToRemove : HTMLElement | Array<HTMLElement>) {
+  pullFromTarget(idObserver : string, elToRemove : MedusaHTMLElement | Array<MedusaHTMLElement>) {
     const indexTarget = this.internalTargets.findIndex((internalTarget) => internalTarget.id === idObserver);
 
     if (indexTarget < 0) {
@@ -207,7 +207,7 @@ class Medusa {
           observer.unobserve(entry.target);
 
           const indexToRemove = internalTargetCreated.observedElements
-            .findIndex(observedElement => observedElement === entry.target);
+            .findIndex(observedElement => observedElement._medusaId === (entry.target as MedusaHTMLElement)._medusaId);
           internalTargetCreated.observedElements.splice(indexToRemove, 1);
 
           if (internalTargetCreated.observedElements.length === 0 && internalTargetCreated.autoremove) {
@@ -237,7 +237,7 @@ class Medusa {
 
     internalTargetCreated.observerInstance = new IntersectionObserver(callback, internalTargetCreated.observerOptions);
 
-    internalTargetCreated.observedElements.forEach((node : HTMLElement) => {
+    internalTargetCreated.observedElements.forEach((node : MedusaHTMLElement) => {
       if (internalTargetCreated.observerInstance === null) return;
 
       (<any>node)._medusaId = crypto.randomBytes(6).toString('hex');
