@@ -169,7 +169,7 @@ class Medusa {
       observerInstance: null,
       observedElements: [],
       observerOptions: {
-        root: null,
+        root: optionsTarget.container,
         rootMargin: optionsTarget.offsets,
         threshold: optionsTarget.mode === Medusa.MODE.BYPIXELS
           ? thresholdsByPixels() : optionsTarget.threshold,
