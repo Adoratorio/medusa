@@ -13,6 +13,7 @@ export enum THRESHOLD {
 export interface Target {
   id : string,
   container: Document | HTMLElement,
+  viewport: null | Document | HTMLElement,
   nodes : Array<MedusaHTMLElement> | string,
   threshold : number,
   offsets: string,

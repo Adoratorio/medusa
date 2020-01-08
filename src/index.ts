@@ -30,6 +30,7 @@ class Medusa {
       targets: {
         id: 'snakes',
         container: document.body,
+        viewport: null,
         nodes: '.m-snake',
         threshold: Medusa.THRESHOLD.FULL,
         offsets: '0px 0px 0px 0px',
@@ -169,7 +170,7 @@ class Medusa {
       observerInstance: null,
       observedElements: [],
       observerOptions: {
-        root: optionsTarget.container || null,
+        root: optionsTarget.viewport,
         rootMargin: optionsTarget.offsets,
         threshold: optionsTarget.mode === Medusa.MODE.BYPIXELS
           ? thresholdsByPixels() : optionsTarget.threshold,
