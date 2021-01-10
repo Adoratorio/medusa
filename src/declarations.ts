@@ -12,12 +12,12 @@ export enum THRESHOLD {
 
 export interface Target {
   id : string,
-  container: Document | HTMLElement,
   viewport: null | Document | HTMLElement,
-  nodes : Array<MedusaHTMLElement> | string,
+  nodes : Array<MedusaHTMLElement>,
   threshold : number,
   offsets: string,
   emitGlobal : boolean,
+  emitByNode : boolean,
   callback : Function,
   mode : MODE,
   autoremove : boolean,
@@ -29,21 +29,17 @@ export interface InternalTarget {
   observedElements : Array<MedusaHTMLElement>,
   observerOptions : object,
   emitGlobal : boolean,
-  container : Document | HTMLElement,
+  emitByNode : boolean,
   mode : MODE,
   callback : Function,
   autoremove : boolean,
 }
 
-export interface MedusaEventInit extends CustomEventInit {
-  id: string,
-}
-
 export type PartialTarget = Partial<Target>
 
 export interface MedusaOptions {
-  targets : Array<PartialTarget> | PartialTarget,
-  debug?: boolean,
+  targets : Array<PartialTarget>,
+  debug? : boolean,
 }
 
 export interface MedusaObserver {
