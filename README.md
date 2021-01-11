@@ -42,20 +42,19 @@ If you are not using any bundlers, you can just load the UMD bundle:
 
 ### MedusaOptions
 #### Definition:
-| parameter | type | default | description |
+| Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------- |
 | targets | `Array<MedusaTarget>` | `[]` | Array to fill with MedusaTarget |
 | debug | `boolean` | `true` | Set it to false if you don't want messages in console |
 
 
 ### MedusaTarget
-
 #### Target interface:
 ```js
 interface Target = {
   id : string,
-  viewport: null | Document | HTMLElement,
-  nodes : Array<MedusaHTMLElement>,
+  viewport : null | Document | HTMLElement,
+  nodes : Array<HTMLElement>,
   threshold : number,
   offsets: string,
   emitGlobal : boolean,
@@ -67,7 +66,7 @@ interface Target = {
 ```
 
 #### Definition:
-| parameter | type | default | description |
+| Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------- |
 | id | `string` | required | The Observer identifier, usefull in case you add multiple observer. |
 | viewport | `HTMLElement` | `null` | The element that is used as the viewport for checking visibility of the target.|
@@ -123,4 +122,21 @@ Medusa.pushToTarget('targetId' : string, elToAdd : HTMLElement | Array<HTMLEleme
 To remove a single node or an array of nodes, you have to pass the targetId of the observer and the node/nodes that you want to remove.
 ```js
 Medusa.pullFromTarget('targetId' : string, elToRemove : HTMLElement | Array<HTMLElement>);
+```
+
+## Events
+When a new Target is created you can choose if Medusa can emit two different events:
+
+| Event | Arguments | Description |
+| :---: | :-------: | :---------- |
+| `medusa-intersection-triggered` | `event` | If you set Target `emitGlobal` property will emit a golbal event on the window every time the callback Target is triggered. |
+| `medusa-node-intersection` | `event` | If you set Target `emitByNode` property will emit an event on the element observed every time the callback Target is triggered. |
+
+#### Argument details:
+```js
+event.detail = {
+  targetId : string, // Observer TargetId
+  node : HTMLElement, // node observed that intersect the viewport previously defined
+  isIn : boolean, // if the element observed is in viewport or not
+}
 ```
