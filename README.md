@@ -24,19 +24,6 @@ const medusa = new Medusa({
 });
 ```
 
-If you are not using any bundlers, you can just load the UMD bundle:
-
-```html
-<script src="/medusa/umd/index.js"></script>
-
-<script>
-  var medusa = window.Medusa({
-    targets: [{ /* ...targetOptions */ }],
-    // ...medusaOptions
-  });
-</script>
-```
-
 
 ## Available options
 

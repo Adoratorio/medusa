@@ -48,6 +48,14 @@ class Medusa {
     return this.internalTargets.findIndex((internalTarget) => internalTarget.id === targetId);
   }
 
+  private emitEventCallback(internalTargetCreated : InternalTarget, entry : IntersectionObserverEntry) {
+      const optsEvent : CustomEventInit = {};
+      optsEvent.detail = { targetId: internalTargetCreated.id, node: entry.target, isIn: entry.isIntersecting };
+      const customEvent = new CustomEvent('medusa-intersection-triggered', optsEvent);
+
+      (internalTargetCreated.emitGlobal ? window : entry.target).dispatchEvent(customEvent);
+  }
+
   private createObserver(internalTargetCreated : InternalTarget) {
     const callback = (entries : IntersectionObserverEntry[], observer : IntersectionObserver) => {
       entries.forEach((entry) => {
@@ -56,28 +64,22 @@ class Medusa {
         if (internalTargetCreated.mode === Medusa.MODE.ONCE && entry.isIntersecting) {
           this.pullFromTarget(internalTargetCreated.id, target);
 
-          if (internalTargetCreated.observedElements.length === 0 && internalTargetCreated.autoremove) {
+          if (internalTargetCreated.autoremove && internalTargetCreated.observedElements.length === 0) {
             this.removeTarget(internalTargetCreated.id);
           }
+
+          if (internalTargetCreated.emitGlobal || internalTargetCreated.emitByNode) {
+            this.emitEventCallback(internalTargetCreated, entry);
+          }
+
+          internalTargetCreated.callback(entry, observer);
+        } else {
+          if (internalTargetCreated.emitGlobal || internalTargetCreated.emitByNode) {
+            this.emitEventCallback(internalTargetCreated, entry);
+          }
+
+          internalTargetCreated.callback(entry, observer);
         }
-
-        if (internalTargetCreated.emitGlobal) {
-          const optsEvent : CustomEventInit = {};
-          optsEvent.detail = { targetId: internalTargetCreated.id, node: entry.target, isIn: entry.isIntersecting };
-          const customEvent = new CustomEvent('medusa-intersection-triggered', optsEvent);
-
-          window.dispatchEvent(customEvent);
-        }
-
-        if (internalTargetCreated.emitByNode) {
-          const optsEvent : CustomEventInit = {};
-          optsEvent.detail = { targetId: internalTargetCreated.id, node: entry.target, isIn: entry.isIntersecting };
-          const customEvent = new CustomEvent('medusa-node-intersection', optsEvent);
-
-          target.dispatchEvent(customEvent);
-        }
-
-        internalTargetCreated.callback(entry, observer);
       });
     };
 
@@ -127,10 +129,10 @@ class Medusa {
       nodes: [],
       threshold: 0,
       offsets: '0px 0px 0px 0px',
-      emitGlobal: false,
-      emitByNode: false,
       callback: () => {},
       mode: Medusa.MODE.DEFAULT,
+      emitGlobal: false,
+      emitByNode: false,
       autoremove: false,
     };
     const partialTarget : Target = { ...defaultTarget, ...newTarget };
