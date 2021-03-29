@@ -73,7 +73,7 @@ class Medusa {
           }
 
           internalTargetCreated.callback(entry, observer);
-        } else {
+        } else if (internalTargetCreated.mode !== Medusa.MODE.ONCE) {
           if (internalTargetCreated.emitGlobal || internalTargetCreated.emitByNode) {
             this.emitEventCallback(internalTargetCreated, entry);
           }
