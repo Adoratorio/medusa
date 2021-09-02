@@ -197,14 +197,8 @@ class Medusa {
     const indexTargetToRemove = this.getTargetIndexFromId(targetId);
 
     if (indexTargetToRemove >= 0) {
+      this.clearTarget(targetId);
       const currentTarget = this.internalTargets[indexTargetToRemove];
-
-      if (currentTarget.observedElements.length > 0) {
-        currentTarget.observedElements.forEach((node, i) => {
-          (<IntersectionObserver>currentTarget.observerInstance).unobserve(node);
-          currentTarget.observedElements.splice(i, 1);
-        });
-      }
 
       (<IntersectionObserver>currentTarget.observerInstance).disconnect();
       currentTarget.observerInstance = null;
@@ -223,7 +217,7 @@ class Medusa {
     if (indexTargetToClear >= 0) {
       const targetObservedElements = this.internalTargets[indexTargetToClear].observedElements;
 
-      if (targetObservedElements.length >= 0) targetObservedElements.forEach(node => this.pullFromTarget(targetId, node));
+      if (targetObservedElements.length >= 0) this.pullFromTarget(targetId, targetObservedElements);
     } else if (this.options.debug) {
       console.warn(`the target id: ${targetId}, is already clear`);
     }
@@ -251,7 +245,10 @@ class Medusa {
       const observer = this.internalTargets[indexTarget].observerInstance as IntersectionObserver;
 
       if (Array.isArray(elsToRemove)) {
-        elsToRemove.forEach((node) => this.pullElementFromTarget(node, indexTarget, observer));
+        for (let index = elsToRemove.length -1; index >= 0; index--) {
+          const node = elsToRemove[index];
+          this.pullElementFromTarget(node, indexTarget, observer);
+        }
       } else {
         this.pullElementFromTarget(elsToRemove, indexTarget, observer)
       }
