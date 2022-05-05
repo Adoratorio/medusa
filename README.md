@@ -18,7 +18,7 @@ Since this package has a [pkg.module](https://github.com/rollup/rollup/wiki/pkg.
 ```js
 import Medusa from '@adoratorio/medusa';
 
-const medusa = new Medusa({ /* ...medusaOptions */ });
+const medusa = new Medusa(/* { ...medusaOptions  } */);
 ```
 
 

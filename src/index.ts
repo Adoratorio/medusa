@@ -17,7 +17,7 @@ class Medusa {
 
   public observers : Map<string, InternalObserver>;
 
-  constructor(options : Partial<MedusaOptions>) {
+  constructor(options : Partial<MedusaOptions> = {}) {
     const configList = options.observers || [];
 
     this.debugMode = options.debug || false;
