@@ -82,7 +82,6 @@ Medusa.observers.get('observerId');
 interface InternalObserver = {
   id : string,
   observerInstance : null | IntersectionObserver,
-  observerOptions : object,
   observedNodes : Map<number, MedusaElement>,
   emitGlobal : boolean,
   emitByNode : boolean,
