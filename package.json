@@ -1,6 +1,6 @@
 {
   "name": "@adoratorio/medusa",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -18,15 +18,18 @@
     "url": "git+https://github.com/Adoratorio/medusa.git"
   },
   "keywords": [
-    "IntersectionObserve",
+    "IntersectionObserver",
+    "IntersectionObserver manager",
     "intesection",
-    "inViewport",
-    "lazy"
+    "in viewport",
+    "lazy",
+    "lazy load"
   ],
   "author": "Adoratorio <contact@adoratorio.com>",
   "contributors": [
     "Andrea Gottardi <andrea@adoratorio.com>",
     "Daniele Borra <daniele@adoratorio.com>",
+    "Andrea Biazon <biazo@adoratorio.com>",
     "Tommaso Algozzino <tommaso@adoratorio.com>"
   ],
   "license": "MIT",

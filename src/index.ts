@@ -1,259 +1,185 @@
-import crypto from 'crypto';
 import {
   MODE,
   THRESHOLD,
-  Target,
-  InternalTarget,
+  InternalObserver,
+  PartialObserverConfig,
   MedusaOptions,
-  PartialTarget,
-  MedusaHTMLElement,
+  MedusaElement,
 } from './declarations';
-import { thresholdsByPixels } from './utils';
+import { thresholdsByPixels, uid } from './utils';
 
 
 class Medusa {
   static MODE = MODE;
-
   static THRESHOLD = THRESHOLD;
 
-  private options : MedusaOptions;
+  private debugMode : boolean;
 
-  private internalTargets : Array<InternalTarget> = [];
-
-  private idList: Array<string> = [];
+  public observers : Map<string, InternalObserver>;
 
   constructor(options : Partial<MedusaOptions>) {
-    const defaults : MedusaOptions = {
-      targets: [],
-      debug: true,
-    };
+    const configList = options.observers || [];
 
-    this.options = { ...defaults, ...options };
+    this.debugMode = options.debug || false;
+    this.observers = new Map();
 
-    this.init();
+    if (configList.length > 0) this.addObserver(configList);
   }
 
-  private init() {
-    Object.defineProperty(HTMLElement.prototype, '_medusaId', {
-      value: '',
-      configurable: true,
-      enumerable: true,
-      writable: true,
-    });
+  private emitEventCallback(internalObserver : InternalObserver, entry : IntersectionObserverEntry) {
+    const optsEvent : CustomEventInit = {};
+    optsEvent.detail = { node: entry.target, isIn: entry.isIntersecting, entry };
+    const customEvent = new CustomEvent(`medusa-${internalObserver.id}`, optsEvent);
 
-    if (this.options.targets.length > 0) this.addTarget(this.options.targets);
+    if (internalObserver.emitGlobal) window.dispatchEvent(customEvent);
+    if (internalObserver.emitByNode) entry.target.dispatchEvent(customEvent);
   }
 
-  private getTargetIndexFromId(targetId : string) {
-    return this.internalTargets.findIndex((internalTarget) => internalTarget.id === targetId);
-  }
-
-  private emitEventCallback(internalTargetCreated : InternalTarget, entry : IntersectionObserverEntry) {
-      const optsEvent : CustomEventInit = {};
-      optsEvent.detail = { targetId: internalTargetCreated.id, node: entry.target, isIn: entry.isIntersecting };
-      const customEvent = new CustomEvent('medusa-intersection-triggered', optsEvent);
-
-      (internalTargetCreated.emitGlobal ? window : entry.target).dispatchEvent(customEvent);
-  }
-
-  private createObserver(internalTargetCreated : InternalTarget) {
+  private createObserver(internalObserver : InternalObserver, observerOptions : object) {
     const callback = (entries : IntersectionObserverEntry[], observer : IntersectionObserver) => {
       entries.forEach((entry) => {
-        const target = entry.target as MedusaHTMLElement;
+        const target = entry.target as MedusaElement;
 
-        if (internalTargetCreated.mode === Medusa.MODE.ONCE && entry.isIntersecting) {
-          this.pullFromTarget(internalTargetCreated.id, target);
+        if (internalObserver.mode === Medusa.MODE.ONCE && entry.isIntersecting) {
+          this.unobserve(internalObserver.id, target);
 
-          if (internalTargetCreated.autoremove && internalTargetCreated.observedElements.length === 0) {
-            this.removeTarget(internalTargetCreated.id);
+          if (internalObserver.emitGlobal || internalObserver.emitByNode) {
+            this.emitEventCallback(internalObserver, entry);
           }
 
-          if (internalTargetCreated.emitGlobal || internalTargetCreated.emitByNode) {
-            this.emitEventCallback(internalTargetCreated, entry);
+          internalObserver.callback(entry, observer);
+        } else if (internalObserver.mode !== Medusa.MODE.ONCE) {
+          if (internalObserver.emitGlobal || internalObserver.emitByNode) {
+            this.emitEventCallback(internalObserver, entry);
           }
 
-          internalTargetCreated.callback(entry, observer);
-        } else if (internalTargetCreated.mode !== Medusa.MODE.ONCE) {
-          if (internalTargetCreated.emitGlobal || internalTargetCreated.emitByNode) {
-            this.emitEventCallback(internalTargetCreated, entry);
-          }
-
-          internalTargetCreated.callback(entry, observer);
+          internalObserver.callback(entry, observer);
         }
       });
     };
 
-    internalTargetCreated.observerInstance = new IntersectionObserver(callback, internalTargetCreated.observerOptions);
-
-    internalTargetCreated.observedElements.forEach((node : MedusaHTMLElement) => {
-      if (internalTargetCreated.observerInstance === null) return;
-
-      this.pushToTarget(internalTargetCreated.id, node);
-    });
+    internalObserver.observerInstance = new IntersectionObserver(callback, observerOptions);
   }
 
-  private createInternalTarget(optionsTarget : Target) {
-    const internalTarget : InternalTarget = {
-      id: optionsTarget.id,
+  private createInternalObserver(observerConfig : PartialObserverConfig) {
+    const internalObserver : InternalObserver = {
+      id: observerConfig.id || '',
       observerInstance: null,
-      observedElements: [],
-      observerOptions: {
-        root: optionsTarget.viewport,
-        rootMargin: optionsTarget.offsets,
-        threshold: optionsTarget.mode === Medusa.MODE.BYPIXELS
-          ? thresholdsByPixels() : optionsTarget.threshold,
-      },
-      emitGlobal: optionsTarget.emitGlobal,
-      emitByNode: optionsTarget.emitByNode,
-      mode: optionsTarget.mode,
-      callback: optionsTarget.callback,
-      autoremove: optionsTarget.autoremove,
+      observedNodes: new Map(),
+      emitGlobal: observerConfig.emitGlobal || false,
+      emitByNode: observerConfig.emitByNode || false,
+      mode: observerConfig.mode || MODE.DEFAULT,
+      callback: observerConfig.callback || function() {},
+    };
+    const observerOptions = {
+      root: observerConfig.viewport || null,
+      rootMargin: observerConfig.offsets || '0px 0px 0px 0px',
+      threshold: observerConfig.mode === Medusa.MODE.BYPIXELS
+        ? thresholdsByPixels() : observerConfig.threshold || 0,
     };
 
-    if (Array.isArray(optionsTarget.nodes)) {
-      internalTarget.observedElements = optionsTarget.nodes;
-    } else {
-      internalTarget.observedElements = [];
-      if (this.options.debug) console.warn(`the node list for the target id: ${optionsTarget.id} is invalid and converted to empty array`);
-    }
+    this.createObserver(internalObserver, observerOptions);
 
-    // TODO fallback observer
-    this.createObserver(internalTarget);
+    if (observerConfig.nodes) this.observe(internalObserver.id, observerConfig.nodes);
+    else if (this.debugMode) console.warn(`no node passed to: '${internalObserver.id}' observer`);
 
-    return internalTarget;
+    return internalObserver;
   }
 
-  private checkAddTarget(newTarget : any) {
-    const defaultTarget = {
-      viewport: null,
-      nodes: [],
-      threshold: 0,
-      offsets: '0px 0px 0px 0px',
-      callback: () => {},
-      mode: Medusa.MODE.DEFAULT,
-      emitGlobal: false,
-      emitByNode: false,
-      autoremove: false,
+  private checkObserver(config : any) {
+    if (!this.observers.has(config.id) && config.id && config.id !== '') {
+      this.observers.set(config.id, this.createInternalObserver(config));
+    } else if (this.debugMode) {
+      console.warn(config.id === '' || !config.id? 'No id was found' : `An Observer with '${config.id}' id-key already exist`);
+    }
+  }
+
+  private observeTarget(internalObserver : InternalObserver, node : MedusaElement) {
+    if (!node._medusaObserversList) node._medusaObserversList = new Map();
+
+    if (!node._medusaObserversList.has(internalObserver.id)) {
+      const nodeId = uid();
+
+      node._medusaObserversList.set(internalObserver.id, nodeId);
+
+      internalObserver.observerInstance?.observe(node);
+      internalObserver.observedNodes.set(nodeId, node);
+    } else if (this.debugMode) {
+      console.warn(`node: ${node}, already observed in: '${internalObserver.id}' observer`);
+    }
+  }
+
+  private unobserveTarget(internalObserver : InternalObserver, node : MedusaElement) {
+    const { _medusaObserversList } = node;
+
+    if (!_medusaObserversList) {
+      if (this.debugMode) console.warn(`The element isn\'t observed by: '${internalObserver.id}' observer`);
+      return;
     };
-    const partialTarget : Target = { ...defaultTarget, ...newTarget };
 
-    if (this.idList.findIndex(id => id === newTarget.id) < 0) {
-      this.internalTargets.push(this.createInternalTarget(partialTarget));
-      this.idList.push(partialTarget.id);
-    } else if (this.options.debug) {
-      console.warn(`The target id-key: '${newTarget.id}', already exist`);
+    const nodeId = _medusaObserversList.get(internalObserver.id);
+
+    if (_medusaObserversList.has(internalObserver.id) && nodeId) {
+      internalObserver.observerInstance?.unobserve(node);
+      internalObserver.observedNodes.delete(nodeId);
+      node._medusaObserversList.delete(internalObserver.id);
+    } else if (this.debugMode) {
+      console.warn(`The element isn\'t observed by: '${internalObserver.id}' observer`);
     }
   }
 
-  private pushElementToTarget(node : MedusaHTMLElement, indexTarget : number) {
-    const { _medusaId } = node;
+  public addObserver(configurations : Array<PartialObserverConfig> | PartialObserverConfig) {
+    if (Array.isArray(configurations)) configurations.forEach((config) => this.checkObserver(config));
+    else if (typeof configurations === 'object') this.checkObserver(configurations);
+    else if (this.debugMode) console.warn(`Observer configuration uncorrect`);
+  }
 
-    if (_medusaId === '') {
-      (<any>node)._medusaId = crypto.randomBytes(6).toString('hex');
+  public clearObserver(observerId : string) {
+    if (this.observers.has(observerId)) {
+      const internalObserver = this.observers.get(observerId)!;
+      const { observedNodes } = internalObserver!;
 
-      (<IntersectionObserver>this.internalTargets[indexTarget].observerInstance).observe(node);
-      this.internalTargets[indexTarget].observedElements.push(node);
-    } else if (this.options.debug) {
-      console.warn(`node: ${node}, already observed`);
+      if (observedNodes.size > 0) observedNodes.forEach((node) => this.unobserveTarget(internalObserver, node));
+    } else if (this.debugMode) {
+      console.warn(`the target id: ${observerId}, is already clear`);
     }
   }
 
-  private pullElementFromTarget(node : MedusaHTMLElement, indexTarget : number, observer : IntersectionObserver) {
-    const { _medusaId } = (<MedusaHTMLElement>node);
-    const elIndexToRemove = this.internalTargets[indexTarget].observedElements.findIndex((observedElement) => (<any>observedElement)._medusaId === _medusaId);
-
-    if (elIndexToRemove >= 0) {
-      observer.unobserve(node);
-      this.internalTargets[indexTarget].observedElements.splice(elIndexToRemove, 1);
-      node._medusaId = '';
-    } else if (this.options.debug) {
-      console.warn('The element isn\'t observed');
-    }
+  public clearAllObservers() {
+    if (this.observers.size > 0) this.observers.forEach((observer, key) => this.clearObserver(key));
   }
 
-  public getTargetFromId(targetId : string) {
-    const indexTarget = this.getTargetIndexFromId(targetId);
-    let target;
+  public removeObserver(observerId : string) {
+    if (this.observers.has(observerId)) {
+      const currentObserver = this.observers.get(observerId)!;
+      if (currentObserver.observedNodes.size > 0) this.clearObserver(observerId);
 
-    if (indexTarget >= 0) {
-      target = this.internalTargets[indexTarget];
-    } else {
-      target = null;
-      if (this.options.debug) console.warn('The target doesn\'t exist');
-    }
-
-    return target;
-  }
-
-  public addTarget(newTargets : Array<PartialTarget> | PartialTarget) {
-    if (Array.isArray(newTargets)) newTargets.forEach((newTarget) => this.checkAddTarget(newTarget));
-
-    else if (typeof newTargets === 'object') this.checkAddTarget(newTargets);
-
-    else if (this.options.debug) console.warn(`Target uncorrect`);
-  }
-
-  public removeTarget(targetId : string) {
-    const indexTargetToRemove = this.getTargetIndexFromId(targetId);
-
-    if (indexTargetToRemove >= 0) {
-      this.clearTarget(targetId);
-      const currentTarget = this.internalTargets[indexTargetToRemove];
-
-      (<IntersectionObserver>currentTarget.observerInstance).disconnect();
-      currentTarget.observerInstance = null;
-      this.internalTargets.splice(indexTargetToRemove, 1);
-
-      this.idList = this.idList.filter(id => id !== targetId);
-      this.internalTargets = this.internalTargets.filter(target => target.id !== targetId);
-    } else if (this.options.debug) {
+      (<IntersectionObserver>currentObserver.observerInstance).disconnect();
+      this.observers.delete(observerId);
+    } else if (this.debugMode) {
       console.warn('The targets id doesn\'t exist');
     }
   }
 
-  public clearTarget(targetId : string) {
-    const indexTargetToClear = this.getTargetIndexFromId(targetId);
+  public observe(observerId : string, elsToObserve : MedusaElement | Array<MedusaElement>) {
+    if (this.observers.has(observerId)) {
+      const internalObserver = this.observers.get(observerId)!;
 
-    if (indexTargetToClear >= 0) {
-      const targetObservedElements = this.internalTargets[indexTargetToClear].observedElements;
-
-      if (targetObservedElements.length >= 0) this.pullFromTarget(targetId, targetObservedElements);
-    } else if (this.options.debug) {
-      console.warn(`the target id: ${targetId}, is already clear`);
+      if (Array.isArray(elsToObserve)) elsToObserve.forEach((node) => this.observeTarget(internalObserver, node));
+      else this.observeTarget(internalObserver, elsToObserve);
+    } else if (this.debugMode) {
+      console.warn(`The observer id: '${observerId}' doesn\'t exist`);
     }
   }
 
-  public clearAllTargets() {
-    this.idList.forEach((targetId) => this.clearTarget(targetId));
-  }
+  public unobserve(observerId : string, elsToUnobserve : MedusaElement | Array<MedusaElement>) {
+    if (this.observers.has(observerId)) {
+      const internalObserver = this.observers.get(observerId)!;
 
-  public pushToTarget(targetId : string, elsToAdd : MedusaHTMLElement | Array<MedusaHTMLElement>) {
-    const indexTarget = this.getTargetIndexFromId(targetId);
-
-    if (indexTarget >= 0) {
-      if (Array.isArray(elsToAdd)) elsToAdd.forEach((node) => this.pushElementToTarget(node, indexTarget));
-      else this.pushElementToTarget(elsToAdd, indexTarget);
-    } else if (this.options.debug) {
-      console.warn('The targets id doesn\'t exist');
-    }
-  }
-
-  public pullFromTarget(targetId : string, elsToRemove : MedusaHTMLElement | Array<MedusaHTMLElement>) {
-    const indexTarget = this.getTargetIndexFromId(targetId);
-
-    if (indexTarget >= 0) {
-      const observer = this.internalTargets[indexTarget].observerInstance as IntersectionObserver;
-
-      if (Array.isArray(elsToRemove)) {
-        for (let index = elsToRemove.length -1; index >= 0; index--) {
-          const node = elsToRemove[index];
-          this.pullElementFromTarget(node, indexTarget, observer);
-        }
-      } else {
-        this.pullElementFromTarget(elsToRemove, indexTarget, observer)
-      }
-    } else if (this.options.debug) {
-      console.warn('The targets id doesn\'t exist');
+      if (Array.isArray(elsToUnobserve)) elsToUnobserve.forEach((node) => this.unobserveTarget(internalObserver, node));
+      else this.unobserveTarget(internalObserver, elsToUnobserve);
+    } else if (this.debugMode) {
+      console.warn(`The observer id: '${observerId}' doesn\'t exist`);
     }
   }
 }

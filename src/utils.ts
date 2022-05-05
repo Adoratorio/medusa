@@ -8,20 +8,10 @@ export function thresholdsByPixels() : Array<number> {
   return arrayThresholds;
 }
 
-export function getOffsets(optionsOffsets : string) : Array<object> {
-  const offsetsString = optionsOffsets || '0px';
-  const offsets = offsetsString.split(/\s+/).map((offset) => {
-    const parts = /^(-?\d*\.?\d+)(px|%)$/.exec(offset);
+let medusaIndexNode = 0;
 
-    if (!parts) throw new Error('rootMargin must be specified in pixels or percent');
+export function uid() {
+  medusaIndexNode += 1;
 
-    return { value: parseFloat(parts[1]), unit: parts[2] };
-  });
-
-  // Handles shorthand.
-  offsets[1] = offsets[1] || offsets[0];
-  offsets[2] = offsets[2] || offsets[0];
-  offsets[3] = offsets[3] || offsets[1];
-
-  return offsets;
+  return Math.floor(Math.random() * Math.floor(Math.random() * Date.now())) + medusaIndexNode;
 }

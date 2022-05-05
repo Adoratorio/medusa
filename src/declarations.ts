@@ -1,3 +1,9 @@
+type CustomElement = HTMLElement & SVGElement & HTMLCanvasElement & HTMLSpanElement;
+
+export interface MedusaElement extends CustomElement {
+  _medusaObserversList : Map<string, number>,
+}
+
 export enum MODE {
   DEFAULT = 'default',
   ONCE = 'once',
@@ -10,43 +16,31 @@ export enum THRESHOLD {
   BEARLY = 0.0,
 }
 
-export interface Target {
+export interface ObserverConfig {
   id : string,
   viewport: null | Document | HTMLElement,
-  nodes : Array<MedusaHTMLElement>,
+  nodes : Array<MedusaElement>,
   threshold : number,
   offsets: string,
   emitGlobal : boolean,
   emitByNode : boolean,
-  callback : Function,
   mode : MODE,
-  autoremove : boolean,
+  callback : Function,
 }
 
-export interface InternalTarget {
+export interface InternalObserver {
   id : string,
   observerInstance : null | IntersectionObserver,
-  observedElements : Array<MedusaHTMLElement>,
-  observerOptions : object,
+  observedNodes : Map<number, MedusaElement>,
   emitGlobal : boolean,
   emitByNode : boolean,
   mode : MODE,
   callback : Function,
-  autoremove : boolean,
 }
 
-export type PartialTarget = Partial<Target>
+export type PartialObserverConfig = Partial<ObserverConfig>
 
 export interface MedusaOptions {
-  targets : Array<PartialTarget>,
+  observers? : Array<ObserverConfig>,
   debug? : boolean,
-}
-
-export interface MedusaObserver {
-  node : HTMLElement,
-  instance : IntersectionObserver,
-}
-
-export interface MedusaHTMLElement extends HTMLElement {
-  _medusaId : string,
 }
