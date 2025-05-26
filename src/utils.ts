@@ -1,17 +1,63 @@
-export function thresholdsByPixels() : Array<number> {
-  const arrayThresholds = [];
+// Counter for ensuring uniqueness
+let medusaNodeCounter = 0;
 
-  for (let i = 0; i <= 1.0; i += 0.01) {
-    arrayThresholds.push(i);
+/**
+ * Generates a unique ID string using timestamp, random values, and counter
+ */
+function uIDFallback(): string {
+  medusaNodeCounter += 1;
+
+  const timestamp = Date.now();
+  const random1 = Math.floor(Math.random() * 0x7FFFFFFF); // 31-bit random
+  const random2 = Math.floor(Math.random() * 0x7FFFFFFF); // 31-bit random
+
+  // Combine all components to ensure uniqueness
+  return `${timestamp}-${random1}-${random2}-${medusaNodeCounter}`;
+}
+
+/**
+ * Crypto-based UUID
+ */
+export function uID(): string {
+  medusaNodeCounter += 1;
+
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    // Use native crypto UUID if available
+    return `${crypto.randomUUID()}-${medusaNodeCounter}`;
   }
 
-  return arrayThresholds;
+  // Fallback to custom implementation
+  return uIDFallback();
 }
 
-let medusaIndexNode = 0;
-
-export function uid() {
-  medusaIndexNode += 1;
-
-  return Math.floor(Math.random() * Math.floor(Math.random() * Date.now())) + medusaIndexNode;
+/**
+ * Reset counter (useful for testing)
+ */
+export function resetUidCounter(): void {
+  medusaNodeCounter = 0;
 }
+
+/**
+ * Get current counter value (useful for debugging)
+ */
+export function getUidCounter(): number {
+  return medusaNodeCounter;
+}
+
+/**
+ * Thresholds utility function
+ */
+export function thresholdsByPixels(): number[] {
+  // Generate array of thresholds from 0 to 1 in small increments
+  // Useful for pixel-based intersection detection
+  const thresholds: number[] = [];
+  for (let i = 0; i <= 100; i++) {
+    thresholds.push(i / 100);
+  }
+  return thresholds;
+}
+
+/**
+ * Empty function
+ */
+export function noop(): void {};

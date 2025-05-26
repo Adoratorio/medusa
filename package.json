@@ -1,7 +1,7 @@
 {
   "name": "@adoratorio/medusa",
-  "version": "2.1.0",
-  "description": "",
+  "version": "3.0.0",
+  "description": "Medusa is a lightweight, SSR-friendly utility for managing multiple IntersectionObservers with flexible event emission, fine-grained control, native once support, and memory-safe cleanup. Ideal for lazy loading, animations, and viewport-based triggers in modern web applications.",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,6 @@
   ],
   "scripts": {
     "build": "rm -rf ./dist && mkdir ./dist && tsc",
-    "build-umd": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,15 +21,13 @@
     "IntersectionObserver manager",
     "intesection",
     "in viewport",
-    "lazy",
     "lazy load"
   ],
   "author": "Adoratorio <contact@adoratorio.com>",
   "contributors": [
     "Andrea Gottardi <andrea@adoratorio.com>",
     "Daniele Borra <daniele@adoratorio.com>",
-    "Andrea Biazon <biazo@adoratorio.com>",
-    "Tommaso Algozzino <tommaso@adoratorio.com>"
+    "Andrea Biazon <biazo@adoratorio.com>"
   ],
   "license": "MIT",
   "bugs": {
@@ -38,7 +35,7 @@
   },
   "homepage": "https://github.com/Adoratorio/medusa#readme",
   "devDependencies": {
-    "typescript": "^3.3.4000",
-    "@types/node": "^14.14.20"
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
   }
 }
