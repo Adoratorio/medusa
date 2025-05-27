@@ -1,6 +1,6 @@
 {
   "name": "@adoratorio/medusa",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Medusa is a lightweight, SSR-friendly utility for managing multiple IntersectionObservers with flexible event emission, fine-grained control, native once support, and memory-safe cleanup. Ideal for lazy loading, animations, and viewport-based triggers in modern web applications.",
   "main": "dist/index.js",
   "module": "dist/index.js",

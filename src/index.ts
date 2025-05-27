@@ -59,7 +59,7 @@ export default class Medusa {
       id: nodeId,
       callback,
     });
-    medusaObserver.observerInstance?.observe(node);
+    medusaObserver.instance?.observe(node);
     medusaObserver.observedNodes.set(nodeId, node);
   }
 
@@ -76,7 +76,7 @@ export default class Medusa {
 
     const { id: nodeId } = observersList.get(medusaObserver.id)!;
 
-    medusaObserver.observerInstance?.unobserve(node);
+    medusaObserver.instance?.unobserve(node);
     medusaObserver.observedNodes.delete(nodeId);
     observersList.delete(medusaObserver.id);
 
@@ -98,14 +98,15 @@ export default class Medusa {
   }
 
   private createObserver(
-    medusaObserver: MedusaObserver,
+    id: string,
     observerOptions: IntersectionObserverInit,
-  ): void {
+    medusaObserver: MedusaObserver,
+  ): IntersectionObserver {
     const callback = (entries: IntersectionObserverEntry[]): void => {
       for (const entry of entries) {
         const target = entry.target as MedusaElement;
         const isOnceMode = medusaObserver.mode === Medusa.MODE.ONCE;
-        const targetCallback = target._medusaObserversList?.get(medusaObserver.id)?.callback;
+        const targetCallback = target._medusaObserversList?.get(id)?.callback;
 
         if (isOnceMode && entry.isIntersecting) {
           this.unobserveTarget(medusaObserver, target);
@@ -115,26 +116,18 @@ export default class Medusa {
           if (medusaObserver.emit) this.emitEventCallback(entry, medusaObserver);
 
           if (targetCallback) {
-            targetCallback(entry, medusaObserver.observerInstance);
+            targetCallback(entry, medusaObserver.instance);
           } else if (medusaObserver.callback) {
-            medusaObserver.callback(entry, medusaObserver.observerInstance);
+            medusaObserver.callback(entry, medusaObserver.instance);
           }
         }
       }
     };
 
-    medusaObserver.observerInstance = new IntersectionObserver(callback, observerOptions);
+    return new IntersectionObserver(callback, observerOptions);
   }
 
-  private createMedusaObserver(config: MedusaObserverConfig): MedusaObserver {
-    const medusaObserver: MedusaObserver = {
-      id: config.id,
-      observerInstance: null,
-      observedNodes: new Map(),
-      mode: config.mode ?? MODE.DEFAULT,
-      emit: config.emit ?? false,
-      callback: config.callback,
-    };
+  private createMedusaObserver(config: MedusaObserverConfig): void {
     const observerOptions: IntersectionObserverInit = {
       root: config.root ?? null,
       rootMargin: config.rootMargin ?? '0px 0px 0px 0px',
@@ -142,14 +135,20 @@ export default class Medusa {
         ? thresholdsByPixels()
         : config.threshold ?? 0,
     };
+    const medusaObserver: MedusaObserver = {
+      instance: null,
+      observedNodes: new Map(),
+      mode: config.mode ?? MODE.DEFAULT,
+      emit: config.emit ?? false,
+      callback: config.callback,
+    };
 
-    this.createObserver(medusaObserver, observerOptions);
+    medusaObserver.instance = this.createObserver(config.id, observerOptions, medusaObserver);
+    this.observers.set(config.id, medusaObserver);
 
     if (config.nodes) {
-      this.observe(medusaObserver.id, config.nodes);
+      this.observe(config.id, config.nodes);
     }
-
-    return medusaObserver;
   }
 
   private validateObserverConfig(config: MedusaObserverConfig): boolean {
@@ -181,8 +180,7 @@ export default class Medusa {
         return;
       }
       if (this.validateObserverConfig(c)) {
-        const medusaObserver = this.createMedusaObserver(c);
-        this.observers.set(c.id, medusaObserver);
+        this.createMedusaObserver(c);
       }
     });
   }
@@ -205,7 +203,7 @@ export default class Medusa {
     if (!observer) return;
 
     this.clearObserver(observerId);
-    observer.observerInstance?.disconnect();
+    observer.instance?.disconnect();
 
     this.observers.delete(observerId);
   }

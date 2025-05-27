@@ -30,8 +30,7 @@ export interface MedusaObserverConfig {
 }
 
 export interface MedusaObserver {
-  id: string;
-  observerInstance: IntersectionObserver | null;
+  instance: IntersectionObserver | null;
   observedNodes: Map<string, MedusaElement>;
   mode: MODE;
   emit: boolean;
