@@ -1,42 +1,111 @@
 {
   "compilerOptions": {
-    /* Language and Environment */
-    "target": "ES6",
-    "lib": ["ES2020", "dom", "dom.iterable"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    // "verbatimModuleSyntax": true,
-    "useDefineForClassFields": true,
+    // === Language & Environment ===
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
 
-    /* Emit */
+    // === Module System ===
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+
+    // === Emit ===
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "removeComments": true,
-    "noEmitOnError": true,
-    "stripInternal": true,
-    "isolatedModules": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "removeComments": false,
+    "noEmit": false,
+    "importHelpers": true,
+    "downlevelIteration": true,
+    "inlineSourceMap": false,
+    "inlineSources": false,
 
-    /* Type Checking */
+    // === JavaScript Support ===
+    "allowJs": false,
+    "checkJs": false,
+
+    // === Type Checking (Strict Mode) ===
     "strict": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    // "exactOptionalPropertyTypes": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
+    "useUnknownInCatchVariables": true,
 
-    /* Interop Constraints */
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    // === Modules ===
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/types": ["src/declarations.ts"]
+    },
+
+    // === Emit Declarations ===
+    "stripInternal": true,
+
+    // === Advanced ===
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+
+    // === Bundler-specific ===
+    "allowArbitraryExtensions": false,
+    "customConditions": [],
+
+    // === Diagnostics ===
+    "explainFiles": false,
+    "extendedDiagnostics": false,
+    "generateCpuProfile": "profile.cpuprofile",
+    "listEmittedFiles": false,
+    "listFiles": false,
+    "traceResolution": false,
+
+    // === Projects ===
+    "composite": false,
+    "disableReferencedProjectLoad": false,
+    "disableSolutionSearching": false,
+    "disableSourceOfProjectReferenceRedirect": false,
+
+    // === Output Formatting ===
+    "noErrorTruncation": true,
+    "preserveWatchOutput": true,
+    "pretty": true,
+
+    // === Completeness ===
+    "skipDefaultLibCheck": true,
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "**/__mocks__/**",
+    "examples/**/*",
+    "docs/**/*",
+    "*.config.js",
+    "*.config.ts"
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
+  "compileOnSave": false
 }

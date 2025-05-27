@@ -14,7 +14,7 @@ export type MedusaCallback = (
 export interface MedusaElement extends Element {
   _medusaObserversList?: Map<string, {
     id: string;
-    callback?: MedusaCallback;
+    callback?: MedusaCallback | undefined;
   }>;
 }
 
@@ -35,7 +35,7 @@ export interface MedusaObserver {
   observedNodes: Map<string, MedusaElement>;
   mode: MODE;
   emit: boolean;
-  callback?: MedusaCallback;
+  callback?: MedusaCallback | undefined;
 }
 
 export interface MedusaOptions {

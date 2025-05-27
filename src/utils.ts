@@ -56,8 +56,3 @@ export function thresholdsByPixels(): number[] {
   }
   return thresholds;
 }
-
-/**
- * Empty function
- */
-export function noop(): void {};

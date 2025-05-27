@@ -1,5 +1,5 @@
+import { MODE } from './declarations';
 import {
-  MODE,
   type MedusaObserver,
   type MedusaObserverConfig,
   type MedusaOptions,
