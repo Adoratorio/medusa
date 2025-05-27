@@ -29,14 +29,16 @@ export default class Medusa {
     }
   }
 
-  private processElements<T extends MedusaElement>(
-    elements: T | T[],
-    processor: (element: T) => void,
+  private processElements<T>(
+    items: T | T[] | null | undefined,
+    processor: (item: T) => void,
   ): void {
-    if (Array.isArray(elements)) {
-      elements.forEach(processor);
+    if (!items) return;
+
+    if (Array.isArray(items)) {
+      items.forEach(processor); 
     } else {
-      processor(elements);
+      processor(items);
     }
   }
 
@@ -172,19 +174,17 @@ export default class Medusa {
     return observer;
   }
 
-  public addObserver(configOrConfigs: MedusaObserverConfig[] | MedusaObserverConfig): void {
-    const configs = Array.isArray(configOrConfigs) ? configOrConfigs : [configOrConfigs];
-
-    for (const config of configs) {
-      if (!config || typeof config !== 'object') {
-        this.debugWarn('Invalid observer configuration: expected an object or an array of objects. Skipping an item.');
-        continue;
+  public addObserver(config: MedusaObserverConfig[] | MedusaObserverConfig): void {
+    this.processElements(config, (c: MedusaObserverConfig) => {
+      if (typeof c !== 'object' || c === null) {
+        this.debugWarn('Invalid observer configuration item: expected an object. Skipping this item.');
+        return;
       }
-      if (this.validateObserverConfig(config)) {
-        const medusaObserver = this.createMedusaObserver(config);
-        this.observers.set(config.id, medusaObserver);
+      if (this.validateObserverConfig(c)) {
+        const medusaObserver = this.createMedusaObserver(c);
+        this.observers.set(c.id, medusaObserver);
       }
-    }
+    });
   }
 
   public clearObserver(observerId: string): void {
@@ -238,6 +238,5 @@ export default class Medusa {
 
   public destroy(): void {
     this.removeAllObservers();
-    Object.keys(this).forEach(key => ((this as any)[key] = null));
   }
 }
