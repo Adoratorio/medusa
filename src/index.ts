@@ -5,6 +5,7 @@ import {
   type MedusaOptions,
   type MedusaElement,
   type MedusaEvent,
+  type MedusaCallback,
 } from './declarations';
 import { thresholdsByPixels, uID } from './utils';
 
@@ -28,10 +29,21 @@ export default class Medusa {
     }
   }
 
+  private processElements<T extends MedusaElement>(
+    elements: T | T[],
+    processor: (element: T) => void,
+  ): void {
+    if (Array.isArray(elements)) {
+      elements.forEach(processor);
+    } else {
+      processor(elements);
+    }
+  }
+
   private observeTarget(
     medusaObserver: MedusaObserver,
     node: MedusaElement,
-    callback?: () => void,
+    callback?: MedusaCallback,
   ): void {
     node._medusaObserversList ??= new Map();
 
@@ -73,8 +85,8 @@ export default class Medusa {
   }
 
   private emitEventCallback(
-    medusaObserver: MedusaObserver,
     entry: IntersectionObserverEntry,
+    medusaObserver: MedusaObserver,
   ): void {
     const customEvent: MedusaEvent = new CustomEvent(`medusa-${medusaObserver.id}`, {
       detail: entry,
@@ -98,7 +110,7 @@ export default class Medusa {
         }
 
         if (!isOnceMode || entry.isIntersecting) {
-          if (medusaObserver.emit) this.emitEventCallback(medusaObserver, entry);
+          if (medusaObserver.emit) this.emitEventCallback(entry, medusaObserver);
 
           if (targetCallback) {
             targetCallback(entry, medusaObserver.observerInstance);
@@ -133,36 +145,22 @@ export default class Medusa {
 
     if (config.nodes) {
       this.observe(medusaObserver.id, config.nodes);
-    } else {
-      this.debugWarn(`No nodes provided for observer '${medusaObserver.id}'`);
     }
 
     return medusaObserver;
   }
 
-  private checkObserver(config: MedusaObserverConfig): void {
+  private validateObserverConfig(config: MedusaObserverConfig): boolean {
     if (!(typeof config.id === 'string' && config.id.trim() !== '')) {
-      this.debugWarn('Observer ID is required and must be a non-empty string');
-      return;
+      this.debugWarn('Observer ID is required and must be a non-empty string. Configuration skipped.');
+      return false;
     }
-
     if (this.observers.has(config.id)) {
-      this.debugWarn(`Observer with ID '${config.id}' already exists`);
-      return;
+      this.debugWarn(`Observer with ID '${config.id}' already exists. Configuration skipped.`);
+      return false;
     }
 
-    this.observers.set(config.id, this.createMedusaObserver(config));
-  }
-
-  private processElements<T extends MedusaElement>(
-    elements: T | T[],
-    processor: (element: T) => void
-  ): void {
-    if (Array.isArray(elements)) {
-      elements.forEach(processor);
-    } else {
-      processor(elements);
-    }
+    return true;
   }
 
   public getObserver(observerId: string): MedusaObserver | null {
@@ -174,13 +172,18 @@ export default class Medusa {
     return observer;
   }
 
-  public addObserver(config: MedusaObserverConfig[] | MedusaObserverConfig): void {
-    if (Array.isArray(config)) {
-      config.forEach(c => this.checkObserver(c));
-    } else if (config && typeof config === 'object') {
-      this.checkObserver(config);
-    } else {
-      this.debugWarn('Invalid observer configuration provided');
+  public addObserver(configOrConfigs: MedusaObserverConfig[] | MedusaObserverConfig): void {
+    const configs = Array.isArray(configOrConfigs) ? configOrConfigs : [configOrConfigs];
+
+    for (const config of configs) {
+      if (!config || typeof config !== 'object') {
+        this.debugWarn('Invalid observer configuration: expected an object or an array of objects. Skipping an item.');
+        continue;
+      }
+      if (this.validateObserverConfig(config)) {
+        const medusaObserver = this.createMedusaObserver(config);
+        this.observers.set(config.id, medusaObserver);
+      }
     }
   }
 
@@ -215,7 +218,7 @@ export default class Medusa {
   public observe(
     observerId: string,
     elements: MedusaElement | MedusaElement[],
-    callback?: () => void,
+    callback?: MedusaCallback,
   ): void {
     const observer = this.getObserver(observerId);
     if (!observer) return;
@@ -235,7 +238,6 @@ export default class Medusa {
 
   public destroy(): void {
     this.removeAllObservers();
-    this.observers.clear();
     Object.keys(this).forEach(key => ((this as any)[key] = null));
   }
 }
