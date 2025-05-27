@@ -43,19 +43,20 @@ export default class Medusa {
   }
 
   private observeTarget(
+    id: string,
     medusaObserver: MedusaObserver,
     node: MedusaElement,
     callback?: MedusaCallback,
   ): void {
     node._medusaObserversList ??= new Map();
 
-    if (node._medusaObserversList.has(medusaObserver.id)) {
-      this.debugWarn(`Node already observed by '${medusaObserver.id}' observer`);
+    if (node._medusaObserversList.has(id)) {
+      this.debugWarn(`Node already observed by '${id}' observer`);
       return;
     }
 
     const nodeId = uID();
-    node._medusaObserversList.set(medusaObserver.id, {
+    node._medusaObserversList.set(id, {
       id: nodeId,
       callback,
     });
@@ -64,21 +65,22 @@ export default class Medusa {
   }
 
   private unobserveTarget(
+    id: string,
     medusaObserver: MedusaObserver,
     node: MedusaElement,
   ): void {
     const observersList = node._medusaObserversList;
 
-    if (!observersList?.has(medusaObserver.id)) {
-      this.debugWarn(`Element not observed by '${medusaObserver.id}' observer`);
+    if (!observersList?.has(id)) {
+      this.debugWarn(`Element not observed by '${id}' observer`);
       return;
     }
 
-    const { id: nodeId } = observersList.get(medusaObserver.id)!;
+    const { id: nodeId } = observersList.get(id)!;
 
     medusaObserver.instance?.unobserve(node);
     medusaObserver.observedNodes.delete(nodeId);
-    observersList.delete(medusaObserver.id);
+    observersList.delete(id);
 
     // Clean up empty observers list
     if (observersList.size === 0) {
@@ -87,10 +89,10 @@ export default class Medusa {
   }
 
   private emitEventCallback(
+    id: string,
     entry: IntersectionObserverEntry,
-    medusaObserver: MedusaObserver,
   ): void {
-    const customEvent: MedusaEvent = new CustomEvent(`medusa-${medusaObserver.id}`, {
+    const customEvent: MedusaEvent = new CustomEvent(`medusa-${id}`, {
       detail: entry,
     });
 
@@ -109,11 +111,11 @@ export default class Medusa {
         const targetCallback = target._medusaObserversList?.get(id)?.callback;
 
         if (isOnceMode && entry.isIntersecting) {
-          this.unobserveTarget(medusaObserver, target);
+          this.unobserveTarget(id, medusaObserver, target);
         }
 
         if (!isOnceMode || entry.isIntersecting) {
-          if (medusaObserver.emit) this.emitEventCallback(entry, medusaObserver);
+          if (medusaObserver.emit) this.emitEventCallback(id, entry);
 
           if (targetCallback) {
             targetCallback(entry, medusaObserver.instance);
@@ -190,7 +192,7 @@ export default class Medusa {
     if (!observer) return;
 
     const nodes = Array.from(observer.observedNodes.values());
-    nodes.forEach(node => this.unobserveTarget(observer, node));
+    nodes.forEach(node => this.unobserveTarget(observerId, observer, node));
   }
 
   public clearAllObservers(): void {
@@ -221,7 +223,7 @@ export default class Medusa {
     const observer = this.getObserver(observerId);
     if (!observer) return;
 
-    this.processElements(elements, node => this.observeTarget(observer, node, callback));
+    this.processElements(elements, node => this.observeTarget(observerId, observer, node, callback));
   }
 
   public unobserve(
@@ -231,7 +233,7 @@ export default class Medusa {
     const observer = this.getObserver(observerId);
     if (!observer) return;
 
-    this.processElements(elements, node => this.unobserveTarget(observer, node));
+    this.processElements(elements, node => this.unobserveTarget(observerId, observer, node));
   }
 
   public destroy(): void {
