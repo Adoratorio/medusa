@@ -4,11 +4,10 @@
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
 
     // === Module System ===
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": false,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": false,
@@ -21,10 +20,8 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "removeComments": false,
-    "noEmit": false,
+    "removeComments": true,
     "importHelpers": true,
-    "downlevelIteration": true,
     "inlineSourceMap": false,
     "inlineSources": false,
 
@@ -56,26 +53,13 @@
 
     // === Advanced ===
     "skipLibCheck": true,
-    "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
 
     // === Bundler-specific ===
     "allowArbitraryExtensions": false,
-    "customConditions": [],
-
-    // === Diagnostics ===
-    "explainFiles": false,
-    "extendedDiagnostics": false,
-    "generateCpuProfile": "profile.cpuprofile",
-    "listEmittedFiles": false,
-    "listFiles": false,
-    "traceResolution": false,
 
     // === Projects ===
     "composite": false,
-    "disableReferencedProjectLoad": false,
-    "disableSolutionSearching": false,
-    "disableSourceOfProjectReferenceRedirect": false,
+    "disableReferencedProjectLoad": true,
 
     // === Output Formatting ===
     "noErrorTruncation": true,
@@ -103,9 +87,4 @@
     "*.config.js",
     "*.config.ts"
   ],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  },
-  "compileOnSave": false
 }

@@ -2,39 +2,13 @@
 let medusaNodeCounter = 0;
 
 /**
- * Generates a unique ID string using timestamp, random values, and counter
- */
-function uIDFallback(): string {
-  medusaNodeCounter += 1;
-
-  const timestamp = Date.now();
-  const random1 = Math.floor(Math.random() * 0x7FFFFFFF); // 31-bit random
-  const random2 = Math.floor(Math.random() * 0x7FFFFFFF); // 31-bit random
-
-  // Combine all components to ensure uniqueness
-  return `${timestamp}-${random1}-${random2}-${medusaNodeCounter}`;
-}
-
-/**
  * Crypto-based UUID
  */
 export function uID(): string {
   medusaNodeCounter += 1;
 
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    // Use native crypto UUID if available
-    return `${crypto.randomUUID()}-${medusaNodeCounter}`;
-  }
-
-  // Fallback to custom implementation
-  return uIDFallback();
-}
-
-/**
- * Reset counter (useful for testing)
- */
-export function resetUidCounter(): void {
-  medusaNodeCounter = 0;
+  // Use native crypto UUID if available
+  return `${crypto.randomUUID()}-${medusaNodeCounter}`;
 }
 
 /**
