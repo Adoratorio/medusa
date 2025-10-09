@@ -108,7 +108,7 @@ export default class Medusa {
       for (const entry of entries) {
         const target = entry.target as MedusaElement;
         const isOnceMode = medusaObserver.mode === Medusa.MODE.ONCE;
-        const targetCallback = target._medusaObserversList?.get(id)?.callback;
+        const callback = target._medusaObserversList?.get(id)?.callback || medusaObserver.callback;
 
         if (isOnceMode && entry.isIntersecting) {
           this.unobserveTarget(id, medusaObserver, target);
@@ -117,11 +117,7 @@ export default class Medusa {
         if (!isOnceMode || entry.isIntersecting) {
           if (medusaObserver.emit) this.emitEventCallback(id, entry);
 
-          if (targetCallback) {
-            targetCallback(entry, medusaObserver.instance);
-          } else if (medusaObserver.callback) {
-            medusaObserver.callback(entry, medusaObserver.instance);
-          }
+          if (callback) callback(entry, medusaObserver.instance)
         }
       }
     };

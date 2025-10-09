@@ -5,10 +5,11 @@ let medusaNodeCounter = 0;
  * Crypto-based UUID
  */
 export function uID(): string {
+  const prepend = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : performance.now();
   medusaNodeCounter += 1;
 
   // Use native crypto UUID if available
-  return `${crypto.randomUUID()}-${medusaNodeCounter}`;
+  return `${prepend}-${medusaNodeCounter}`;
 }
 
 /**
