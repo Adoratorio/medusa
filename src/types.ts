@@ -1,38 +1,33 @@
-export enum MODE {
-  DEFAULT = 'DEFAULT',
-  ONCE = 'ONCE',
-  BYPIXELS = 'BYPIXELS',
-}
+export const MODE = {
+  DEFAULT: 'DEFAULT',
+  ONCE: 'ONCE',
+  BYPIXELS: 'BYPIXELS',
+} as const;
+
+export type Mode = (typeof MODE)[keyof typeof MODE];
 
 export type MedusaEvent = CustomEvent<IntersectionObserverEntry>;
 
 export type MedusaCallback = (
   entry: IntersectionObserverEntry,
-  observer: IntersectionObserver | null,
+  observer: IntersectionObserver,
 ) => void;
-
-export interface MedusaElement extends Element {
-  _medusaObserversList?: Map<string, {
-    id: string;
-    callback?: MedusaCallback | undefined;
-  }>;
-}
 
 export interface MedusaObserverConfig {
   id: string;
   root?: Element | null;
   rootMargin?: string;
   threshold?: number | number[];
-  nodes?: MedusaElement | MedusaElement[];
-  mode?: MODE;
+  nodes?: Element | Iterable<Element> | null;
+  mode?: Mode;
   emit?: boolean;
   callback?: MedusaCallback;
 }
 
 export interface MedusaObserver {
-  instance: IntersectionObserver | null;
-  observedNodes: Map<string, MedusaElement>;
-  mode: MODE;
+  instance: IntersectionObserver;
+  observedNodes: Set<Element>;
+  mode: Mode;
   emit: boolean;
   callback?: MedusaCallback | undefined;
 }

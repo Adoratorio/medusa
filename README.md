@@ -53,11 +53,13 @@ type MedusaCallback = (
 
 ### Available Modes
 ```typescript
-enum MODE {
-  DEFAULT = 'DEFAULT',    // Trigger on every intersection
-  ONCE = 'ONCE',          // Trigger only once
-  BYPIXELS = 'BYPIXELS',  // Trigger per pixel in viewport
-}
+const MODE = {
+  DEFAULT: 'DEFAULT',    // Trigger on every intersection
+  ONCE: 'ONCE',          // Trigger only once
+  BYPIXELS: 'BYPIXELS',  // Trigger every 1% of intersection (101 thresholds)
+} as const;
+
+type Mode = (typeof MODE)[keyof typeof MODE];
 ```
 
 ## Methods
@@ -89,9 +91,10 @@ medusa.observe('myObserver', element, (entry, observer) => {
   console.log('Custom callback for this element');
 });
 
-// Observe multiple elements
+// Observe multiple elements — accepts any Iterable<Element>,
+// so NodeList / HTMLCollection / Set / arrays all work directly.
 const elements = document.querySelectorAll('.targets');
-medusa.observe('myObserver', Array.from(elements));
+medusa.observe('myObserver', elements);
 ```
 
 ### Management Methods
@@ -122,8 +125,13 @@ medusa.destroy();
 When `emit: true` is set, Medusa emits custom events on intersecting elements:
 
 ```typescript
+import type { MedusaEvent } from '@adoratorio/medusa';
+
 // Event name format: medusa-${observerId}
-element.addEventListener('medusa-myObserver', (event: CustomEvent) => {
+// `addEventListener` cannot infer the payload type from a dynamic event name,
+// so cast to `MedusaEvent` for full type-safety on `event.detail`.
+element.addEventListener('medusa-myObserver', (e) => {
+  const event = e as MedusaEvent;
   const entry: IntersectionObserverEntry = event.detail;
   console.log('Intersection ratio:', entry.intersectionRatio);
 });

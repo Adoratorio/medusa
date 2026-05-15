@@ -1,16 +1,33 @@
 {
   "name": "@adoratorio/medusa",
-  "version": "3.0.6",
+  "version": "4.0.0",
   "description": "Medusa is a lightweight, SSR-friendly utility for managing multiple IntersectionObservers with flexible event emission, fine-grained control, native once support, and memory-safe cleanup. Ideal for lazy loading, animations, and viewport-based triggers in modern web applications.",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./dist/*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
+  },
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "build": "rm -rf ./dist && mkdir ./dist && tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -rf ./dist && mkdir ./dist && tsgo",
+    "typecheck": "tsgo --noEmit",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint --fix src",
+    "format": "oxfmt src",
+    "format:check": "oxfmt --check src",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "prepublishOnly": "npm run check && npm run build"
   },
   "repository": {
     "type": "git",
@@ -34,8 +51,13 @@
     "url": "https://github.com/Adoratorio/medusa/issues"
   },
   "homepage": "https://github.com/Adoratorio/medusa#readme",
+  "engines": {
+    "node": ">=22"
+  },
   "devDependencies": {
-    "@types/node": "^22.15.21",
-    "typescript": "^5.8.3"
+    "@types/node": "^22.19.17",
+    "@typescript/native-preview": "7.0.0-dev.20260421.2",
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0"
   }
 }

@@ -1,19 +1,32 @@
-import { MODE } from './declarations';
 import {
+  MODE,
+  type MedusaCallback,
+  type MedusaEvent,
   type MedusaObserver,
   type MedusaObserverConfig,
   type MedusaOptions,
-  type MedusaElement,
-  type MedusaEvent,
-  type MedusaCallback,
-} from './declarations';
-import { thresholdsByPixels, uID } from './utils';
+} from './types.ts';
+import { THRESHOLDS_BY_PIXELS } from './utils.ts';
+
+export { MODE } from './types.ts';
+export type {
+  Mode,
+  MedusaCallback,
+  MedusaEvent,
+  MedusaObserver,
+  MedusaObserverConfig,
+  MedusaOptions,
+} from './types.ts';
 
 export default class Medusa {
-  static readonly MODE = MODE;
+  static readonly MODE: typeof MODE = MODE;
 
   private readonly debugMode: boolean;
   private readonly observers = new Map<string, MedusaObserver>();
+  private readonly elementObservers = new WeakMap<
+    Element,
+    Map<string, MedusaCallback | undefined>
+  >();
 
   constructor(options: Partial<MedusaOptions> = {}) {
     this.debugMode = options.debug ?? false;
@@ -29,119 +42,129 @@ export default class Medusa {
     }
   }
 
-  private processElements<T>(
-    items: T | T[] | null | undefined,
-    processor: (item: T) => void,
+  private forEachElement(
+    elements: Element | Iterable<Element> | null | undefined,
+    processor: (el: Element) => void,
   ): void {
-    if (!items) return;
-
-    if (Array.isArray(items)) {
-      items.forEach(processor); 
-    } else {
-      processor(items);
+    if (!elements) return;
+    // Duck-type via nodeType instead of `instanceof Element`: the latter
+    // throws ReferenceError on pure Node (no DOM globals), and breaks across
+    // realms (iframes) where each window has its own Element constructor.
+    if ('nodeType' in elements) {
+      if (elements.nodeType === 1) processor(elements);
+      return;
+    }
+    for (const el of elements) {
+      if (el) processor(el);
     }
   }
 
+  private forEachConfig(
+    config: MedusaObserverConfig | MedusaObserverConfig[],
+    processor: (c: MedusaObserverConfig) => void,
+  ): void {
+    if (Array.isArray(config)) {
+      for (const c of config) {
+        if (c) processor(c);
+      }
+    } else {
+      processor(config);
+    }
+  }
+
+  private cleanupNodeFromObserver(
+    observerId: string,
+    node: Element,
+    observedNodes: Set<Element>,
+  ): void {
+    observedNodes.delete(node);
+    const list = this.elementObservers.get(node);
+    if (list) {
+      list.delete(observerId);
+      if (list.size === 0) {
+        this.elementObservers.delete(node);
+      }
+    }
+  }
+
+  // Observing a node already observed by the same id updates its callback.
+  // IntersectionObserver.observe and Set.add are both idempotent.
   private observeTarget(
     id: string,
     medusaObserver: MedusaObserver,
-    node: MedusaElement,
+    node: Element,
     callback?: MedusaCallback,
   ): void {
-    node._medusaObserversList ??= new Map();
-
-    if (node._medusaObserversList.has(id)) {
-      this.debugWarn(`Node already observed by '${id}' observer`);
-      return;
+    let list = this.elementObservers.get(node);
+    if (!list) {
+      list = new Map();
+      this.elementObservers.set(node, list);
     }
-
-    const nodeId = uID();
-    node._medusaObserversList.set(id, {
-      id: nodeId,
-      callback,
-    });
-    medusaObserver.instance?.observe(node);
-    medusaObserver.observedNodes.set(nodeId, node);
+    list.set(id, callback);
+    medusaObserver.instance.observe(node);
+    medusaObserver.observedNodes.add(node);
   }
 
-  private unobserveTarget(
-    id: string,
-    medusaObserver: MedusaObserver,
-    node: MedusaElement,
-  ): void {
-    const observersList = node._medusaObserversList;
-
-    if (!observersList?.has(id)) {
+  private unobserveTarget(id: string, medusaObserver: MedusaObserver, node: Element): void {
+    const list = this.elementObservers.get(node);
+    if (!list?.has(id)) {
       this.debugWarn(`Element not observed by '${id}' observer`);
       return;
     }
 
-    const { id: nodeId } = observersList.get(id)!;
-
-    medusaObserver.instance?.unobserve(node);
-    medusaObserver.observedNodes.delete(nodeId);
-    observersList.delete(id);
-
-    // Clean up empty observers list
-    if (observersList.size === 0) {
-      delete node._medusaObserversList;
-    }
+    medusaObserver.instance.unobserve(node);
+    this.cleanupNodeFromObserver(id, node, medusaObserver.observedNodes);
   }
 
-  private emitEventCallback(
-    id: string,
-    entry: IntersectionObserverEntry,
-  ): void {
+  private emitEventCallback(id: string, entry: IntersectionObserverEntry): void {
     const customEvent: MedusaEvent = new CustomEvent(`medusa-${id}`, {
       detail: entry,
     });
-
     entry.target.dispatchEvent(customEvent);
   }
 
-  private createObserver(
-    id: string,
-    observerOptions: IntersectionObserverInit,
-    medusaObserver: MedusaObserver,
-  ): IntersectionObserver {
-    const callback = (entries: IntersectionObserverEntry[]): void => {
-      for (const entry of entries) {
-        const target = entry.target as MedusaElement;
-        const isOnceMode = medusaObserver.mode === Medusa.MODE.ONCE;
-        const callback = target._medusaObserversList?.get(id)?.callback || medusaObserver.callback;
-
-        if (isOnceMode && entry.isIntersecting) {
-          this.unobserveTarget(id, medusaObserver, target);
-        }
-
-        if (!isOnceMode || entry.isIntersecting) {
-          if (medusaObserver.emit) this.emitEventCallback(id, entry);
-
-          if (callback) callback(entry, medusaObserver.instance)
-        }
-      }
-    };
-
-    return new IntersectionObserver(callback, observerOptions);
-  }
-
   private createMedusaObserver(config: MedusaObserverConfig): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      this.debugWarn(`IntersectionObserver not available; skipping '${config.id}'`);
+      return;
+    }
+
     const observerOptions: IntersectionObserverInit = {
       root: config.root ?? null,
       rootMargin: config.rootMargin ?? '0px 0px 0px 0px',
-      threshold: config.mode === Medusa.MODE.BYPIXELS
-        ? thresholdsByPixels()
-        : config.threshold ?? 0,
-    };
-    const medusaObserver: MedusaObserver = {
-      instance: null,
-      observedNodes: new Map(),
-      mode: config.mode ?? MODE.DEFAULT,
-      emit: config.emit ?? false,
-      callback: config.callback,
+      threshold: config.mode === MODE.BYPIXELS ? THRESHOLDS_BY_PIXELS : (config.threshold ?? 0),
     };
 
-    medusaObserver.instance = this.createObserver(config.id, observerOptions, medusaObserver);
+    const observedNodes = new Set<Element>();
+    const mode = config.mode ?? MODE.DEFAULT;
+    const emit = config.emit ?? false;
+    const userCallback = config.callback;
+
+    const instance = new IntersectionObserver((entries, observer) => {
+      for (const entry of entries) {
+        const { target } = entry;
+        const isOnceMode = mode === MODE.ONCE;
+        const targetCallback = this.elementObservers.get(target)?.get(config.id) ?? userCallback;
+
+        if (isOnceMode && entry.isIntersecting) {
+          observer.unobserve(target);
+          this.cleanupNodeFromObserver(config.id, target, observedNodes);
+        }
+
+        if (!isOnceMode || entry.isIntersecting) {
+          if (emit) this.emitEventCallback(config.id, entry);
+          if (targetCallback) targetCallback(entry, observer);
+        }
+      }
+    }, observerOptions);
+
+    const medusaObserver: MedusaObserver = {
+      instance,
+      observedNodes,
+      mode,
+      emit,
+      callback: userCallback,
+    };
     this.observers.set(config.id, medusaObserver);
 
     if (config.nodes) {
@@ -151,14 +174,15 @@ export default class Medusa {
 
   private validateObserverConfig(config: MedusaObserverConfig): boolean {
     if (!(typeof config.id === 'string' && config.id.trim() !== '')) {
-      this.debugWarn('Observer ID is required and must be a non-empty string. Configuration skipped.');
+      this.debugWarn(
+        'Observer ID is required and must be a non-empty string. Configuration skipped.',
+      );
       return false;
     }
     if (this.observers.has(config.id)) {
       this.debugWarn(`Observer with ID '${config.id}' already exists. Configuration skipped.`);
       return false;
     }
-
     return true;
   }
 
@@ -172,11 +196,7 @@ export default class Medusa {
   }
 
   public addObserver(config: MedusaObserverConfig[] | MedusaObserverConfig): void {
-    this.processElements(config, (c: MedusaObserverConfig) => {
-      if (typeof c !== 'object' || c === null) {
-        this.debugWarn('Invalid observer configuration item: expected an object. Skipping this item.');
-        return;
-      }
+    this.forEachConfig(config, (c) => {
       if (this.validateObserverConfig(c)) {
         this.createMedusaObserver(c);
       }
@@ -187,13 +207,15 @@ export default class Medusa {
     const observer = this.getObserver(observerId);
     if (!observer) return;
 
-    const nodes = Array.from(observer.observedNodes.values());
-    nodes.forEach(node => this.unobserveTarget(observerId, observer, node));
+    for (const node of observer.observedNodes) {
+      this.unobserveTarget(observerId, observer, node);
+    }
   }
 
   public clearAllObservers(): void {
-    const observerIds = Array.from(this.observers.keys());
-    observerIds.forEach(id => this.clearObserver(id));
+    for (const id of this.observers.keys()) {
+      this.clearObserver(id);
+    }
   }
 
   public removeObserver(observerId: string): void {
@@ -201,35 +223,37 @@ export default class Medusa {
     if (!observer) return;
 
     this.clearObserver(observerId);
-    observer.instance?.disconnect();
-
+    observer.instance.disconnect();
     this.observers.delete(observerId);
   }
 
   public removeAllObservers(): void {
-    const observerIds = Array.from(this.observers.keys());
-    observerIds.forEach(id => this.removeObserver(id));
+    for (const id of this.observers.keys()) {
+      this.removeObserver(id);
+    }
   }
 
   public observe(
     observerId: string,
-    elements: MedusaElement | MedusaElement[],
+    elements: Element | Iterable<Element> | null | undefined,
     callback?: MedusaCallback,
   ): void {
     const observer = this.getObserver(observerId);
     if (!observer) return;
 
-    this.processElements(elements, node => this.observeTarget(observerId, observer, node, callback));
+    this.forEachElement(elements, (node) =>
+      this.observeTarget(observerId, observer, node, callback),
+    );
   }
 
   public unobserve(
     observerId: string,
-    elements: MedusaElement | MedusaElement[],
+    elements: Element | Iterable<Element> | null | undefined,
   ): void {
     const observer = this.getObserver(observerId);
     if (!observer) return;
 
-    this.processElements(elements, node => this.unobserveTarget(observerId, observer, node));
+    this.forEachElement(elements, (node) => this.unobserveTarget(observerId, observer, node));
   }
 
   public destroy(): void {
