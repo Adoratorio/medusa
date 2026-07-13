@@ -46,16 +46,22 @@ export default class Medusa {
     elements: Element | Iterable<Element> | null | undefined,
     processor: (el: Element) => void,
   ): void {
-    if (!elements) return;
+    if (!elements) {
+      return;
+    }
     // Duck-type via nodeType instead of `instanceof Element`: the latter
     // throws ReferenceError on pure Node (no DOM globals), and breaks across
     // realms (iframes) where each window has its own Element constructor.
     if ('nodeType' in elements) {
-      if (elements.nodeType === 1) processor(elements);
+      if (elements.nodeType === 1) {
+        processor(elements);
+      }
       return;
     }
     for (const el of elements) {
-      if (el) processor(el);
+      if (el) {
+        processor(el);
+      }
     }
   }
 
@@ -65,7 +71,9 @@ export default class Medusa {
   ): void {
     if (Array.isArray(config)) {
       for (const c of config) {
-        if (c) processor(c);
+        if (c) {
+          processor(c);
+        }
       }
     } else {
       processor(config);
@@ -152,8 +160,12 @@ export default class Medusa {
         }
 
         if (!isOnceMode || entry.isIntersecting) {
-          if (emit) this.emitEventCallback(config.id, entry);
-          if (targetCallback) targetCallback(entry, observer);
+          if (emit) {
+            this.emitEventCallback(config.id, entry);
+          }
+          if (targetCallback) {
+            targetCallback(entry, observer);
+          }
         }
       }
     }, observerOptions);
@@ -205,7 +217,9 @@ export default class Medusa {
 
   public clearObserver(observerId: string): void {
     const observer = this.getObserver(observerId);
-    if (!observer) return;
+    if (!observer) {
+      return;
+    }
 
     for (const node of observer.observedNodes) {
       this.unobserveTarget(observerId, observer, node);
@@ -220,7 +234,9 @@ export default class Medusa {
 
   public removeObserver(observerId: string): void {
     const observer = this.getObserver(observerId);
-    if (!observer) return;
+    if (!observer) {
+      return;
+    }
 
     this.clearObserver(observerId);
     observer.instance.disconnect();
@@ -239,7 +255,9 @@ export default class Medusa {
     callback?: MedusaCallback,
   ): void {
     const observer = this.getObserver(observerId);
-    if (!observer) return;
+    if (!observer) {
+      return;
+    }
 
     this.forEachElement(elements, (node) =>
       this.observeTarget(observerId, observer, node, callback),
@@ -251,7 +269,9 @@ export default class Medusa {
     elements: Element | Iterable<Element> | null | undefined,
   ): void {
     const observer = this.getObserver(observerId);
-    if (!observer) return;
+    if (!observer) {
+      return;
+    }
 
     this.forEachElement(elements, (node) => this.unobserveTarget(observerId, observer, node));
   }

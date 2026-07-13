@@ -1,6 +1,6 @@
 {
   "name": "@adoratorio/medusa",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Medusa is a lightweight, SSR-friendly utility for managing multiple IntersectionObservers with flexible event emission, fine-grained control, native once support, and memory-safe cleanup. Ideal for lazy loading, animations, and viewport-based triggers in modern web applications.",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,18 +16,19 @@
       "import": "./dist/*.js"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "build": "rm -rf ./dist && mkdir ./dist && tsgo",
-    "typecheck": "tsgo --noEmit",
+    "build": "rm -rf ./dist && tsc",
+    "typecheck": "tsc --noEmit",
     "lint": "oxlint src",
     "lint:fix": "oxlint --fix src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src",
-    "check": "npm run typecheck && npm run lint && npm run format:check",
-    "prepublishOnly": "npm run check && npm run build"
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
+    "prepublishOnly": "pnpm run check && pnpm run build"
   },
   "repository": {
     "type": "git",
@@ -54,10 +55,11 @@
   "engines": {
     "node": ">=22"
   },
+  "packageManager": "pnpm@11.12.0",
   "devDependencies": {
     "@types/node": "^22.19.17",
-    "@typescript/native-preview": "7.0.0-dev.20260421.2",
-    "oxfmt": "^0.47.0",
-    "oxlint": "^1.62.0"
+    "oxfmt": "^0.58.0",
+    "oxlint": "^1.73.0",
+    "typescript": "^7.0.2"
   }
 }

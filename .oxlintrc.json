@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "import", "unicorn", "oxc"],
+  "plugins": ["eslint", "typescript", "import", "unicorn", "oxc", "vue"],
   "env": {
     "browser": true
   },
@@ -16,13 +16,14 @@
     "eslint/func-style": ["error", "declaration", { "allowArrowFunctions": true }],
     "eslint/id-length": "off",
     "eslint/max-statements": ["warn", { "max": 20 }, { "ignoreTopLevelFunctions": true }],
+    "eslint/max-params": ["warn", { "max": 5 }],
     "eslint/no-ternary": "off",
     "eslint/no-magic-numbers": "off",
     "eslint/sort-imports": "off",
     "eslint/sort-keys": "off",
-    "eslint/max-params": "off",
-    "eslint/curly": "off",
 
+    "import/consistent-type-specifier-style": ["warn", "prefer-inline"],
+    "import/exports-last": "off",
     "import/group-exports": "off",
     "import/no-anonymous-default-export": ["warn", { "allowObject": true, "allowNew": true }],
     "import/no-cycle": "error",
@@ -32,7 +33,6 @@
     "import/no-mutable-exports": "error",
     "import/prefer-default-export": "off",
     "import/no-self-import": "error",
-    "import/consistent-type-specifier-style": ["warn", "prefer-inline"],
 
     "unicorn/filename-case": [
       "error",

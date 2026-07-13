@@ -21,7 +21,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "removeComments": true,
-    "importHelpers": true,
     "stripInternal": true,
 
     // === Strict type checking ===
