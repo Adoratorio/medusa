@@ -28,15 +28,15 @@ interface MedusaObserverConfig {
   root?: Element | null;
   rootMargin?: string;
   threshold?: number | number[];
-  nodes?: Element | Element[];
-  mode?: MODE;
+  nodes?: Element | Iterable<Element> | null;
+  mode?: Mode;
   emit?: boolean;
   callback?: MedusaCallback;
 }
 
 type MedusaCallback = (
   entry: IntersectionObserverEntry,
-  observer: IntersectionObserver | null,
+  observer: IntersectionObserver,
 ) => void;
 ```
 
@@ -45,9 +45,9 @@ type MedusaCallback = (
 | :-------: | :--: | :-----: | :---------- |
 | id | `string` | required | Unique observer identifier |
 | root | `Element` | `null` | Viewport element for intersection checking |
-| rootMargin | `string` | `'0px'` | Margin around root (CSS format) |
+| rootMargin | `string` | `'0px 0px 0px 0px'` | Margin around root (CSS format) |
 | threshold | `number\|number[]` | `0` | Intersection threshold(s) |
-| mode | `MODE` | `DEFAULT` | Observer behavior mode |
+| mode | `Mode` | `DEFAULT` | Observer behavior mode |
 | emit | `boolean` | `false` | Emit custom events on intersection |
 | callback | `MedusaCallback` | `undefined` | Intersection callback function |
 
