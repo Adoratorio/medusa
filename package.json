@@ -41,25 +41,22 @@
     "in viewport",
     "lazy load"
   ],
-  "author": "Adoratorio <contact@adoratorio.com>",
+  "author": "Adoratorio Studio <contact@adoratorio.com>",
   "contributors": [
     "Andrea Gottardi <andrea@adoratorio.com>",
     "Daniele Borra <daniele@adoratorio.com>",
-    "Andrea Biazon <biazo@adoratorio.com>"
+    "Andrea Biason <biazo@adoratorio.com>"
   ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Adoratorio/medusa/issues"
   },
   "homepage": "https://github.com/Adoratorio/medusa#readme",
-  "engines": {
-    "node": ">=22"
-  },
   "packageManager": "pnpm@11.12.0",
   "devDependencies": {
-    "@types/node": "^22.19.17",
-    "oxfmt": "^0.58.0",
-    "oxlint": "^1.73.0",
+    "@types/node": "^26.1.1",
+    "oxfmt": "^0.59.0",
+    "oxlint": "^1.74.0",
     "typescript": "^7.0.2"
   }
 }
