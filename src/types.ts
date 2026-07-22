@@ -15,7 +15,7 @@ export type MedusaCallback = (
 
 export interface MedusaObserverConfig {
   id: string;
-  root?: Element | null;
+  root?: Element | Document | null;
   rootMargin?: string;
   threshold?: number | number[];
   nodes?: Element | Iterable<Element> | null;
