@@ -104,3 +104,12 @@ element.addEventListener('medusa-myObserver', (e) => {
 ## TypeScript Support
 
 Medusa is written in TypeScript and includes full type definitions, making it completely type-safe out of the box.
+
+## Maintenance and compatibility
+
+See [MAINTAINERS.md](MAINTAINERS.md), [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CHANGELOG.md](CHANGELOG.md). Historical contributor credits are retained.
+The CI runtime is Node 24; DOM instances are client-only. Imports are SSR-safe.
+The runtime expects native ES2023 support; TypeScript does not provide browser
+polyfills. DOM functionality uses requestAnimationFrame, Pointer/Touch Events
+and observers where applicable. Test the target browser matrix before release.
