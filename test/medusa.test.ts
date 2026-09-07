@@ -211,3 +211,25 @@ describe('Medusa queued notification regressions', () => {
     m.destroy();
   });
 });
+
+it('does not deliver old batch entries after a ONCE callback rearms itself', () => {
+  const callback = vi.fn(() => m.observe('rearm', element));
+  const m = new Medusa({
+    observers: [{ id: 'rearm', mode: MODE.ONCE, threshold: [0.5, 1], nodes: element, callback }],
+  });
+  const observer = instances[0]!;
+  const entries = [0.5, 1].map((intersectionRatio) => ({
+    target: element,
+    intersectionRatio,
+    isIntersecting: true,
+    time: 0,
+    boundingClientRect: new DOMRect(),
+    intersectionRect: new DOMRect(),
+    rootBounds: null,
+  }));
+  observer.callback(entries, observer as unknown as IntersectionObserver);
+  expect(callback).toHaveBeenCalledTimes(1);
+  observer.notify(element, 1);
+  expect(callback).toHaveBeenCalledTimes(2);
+  m.destroy();
+});

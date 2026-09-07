@@ -145,10 +145,15 @@ class Medusa {
 
     const instance = new IntersectionObserver((entries, observer) => {
       const isOnceMode = mode === MODE.ONCE;
+      const completed = isOnceMode ? new Set<Element>() : null;
       for (const entry of entries) {
         const { target } = entry;
         // Ignore queued notifications from removed or replaced observers/targets.
-        if (this.#observers.get(config.id)?.instance !== observer || !observedNodes.has(target)) {
+        if (
+          this.#observers.get(config.id)?.instance !== observer ||
+          !observedNodes.has(target) ||
+          completed?.has(target)
+        ) {
           // oxlint-disable-next-line no-continue -- discard stale entries without nesting callback delivery
           continue;
         }
@@ -159,6 +164,7 @@ class Medusa {
         const reached = isOnceMode ? this.#hasReached(entry, minThreshold) : true;
 
         if (isOnceMode && reached) {
+          completed?.add(target);
           observer.unobserve(target);
           this.#cleanupNodeFromObserver(config.id, target, observedNodes);
         }

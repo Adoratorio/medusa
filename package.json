@@ -21,7 +21,8 @@
     "dist/**/*",
     "src/**/*",
     "MAINTAINERS.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "CONTRIBUTING.md"
   ],
   "scripts": {
     "build": "rm -rf ./dist && tsc",
@@ -50,7 +51,8 @@
   "contributors": [
     "Andrea Gottardi <andrea@adoratorio.com>",
     "Daniele Borra <daniele@adoratorio.com>",
-    "Andrea Biason <biazo@adoratorio.com>"
+    "Andrea Biason <biazo@adoratorio.com>",
+    "Tommaso Algozzino <tommaso@adoratorio.com>"
   ],
   "license": "MIT",
   "bugs": {
