@@ -153,3 +153,61 @@ describe('Medusa management', () => {
     expect(medusa.getObserver('a')).toBeNull();
   });
 });
+
+describe('Medusa queued notification regressions', () => {
+  it('treats an empty threshold list as zero', () => {
+    const callback = vi.fn();
+    const m = new Medusa({
+      observers: [{ id: 'empty', mode: MODE.ONCE, threshold: [], nodes: element, callback }],
+    });
+    instances[0]?.notify(element, 0.1);
+    expect(callback).toHaveBeenCalledTimes(1);
+    m.destroy();
+  });
+
+  it('fires ONCE just once for multiple entries in the same batch', () => {
+    const callback = vi.fn();
+    const m = new Medusa({
+      observers: [{ id: 'once', mode: MODE.ONCE, threshold: [0.5, 1], nodes: element, callback }],
+    });
+    const observer = instances[0]!;
+    observer.callback(
+      [0.5, 1].map((intersectionRatio) => ({
+        target: element,
+        intersectionRatio,
+        isIntersecting: true,
+        time: 0,
+        boundingClientRect: new DOMRect(),
+        intersectionRect: new DOMRect(),
+        rootBounds: null,
+      })),
+      observer as unknown as IntersectionObserver,
+    );
+    expect(callback).toHaveBeenCalledTimes(1);
+    m.destroy();
+  });
+
+  it('does not deliver queued entries after unobserve or destroy', () => {
+    const callback = vi.fn();
+    const m = new Medusa({ observers: [{ id: 'all', nodes: element, callback }] });
+    m.unobserve('all', element);
+    instances[0]?.notify(element, 1);
+    expect(callback).not.toHaveBeenCalled();
+    m.observe('all', element);
+    m.destroy();
+    instances[0]?.notify(element, 1);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('ignores entries belonging to a replaced observer id', () => {
+    const callback = vi.fn();
+    const m = new Medusa({ observers: [{ id: 'same', nodes: element, callback }] });
+    m.removeObserver('same');
+    m.addObserver({ id: 'same', nodes: element, callback });
+    instances[0]?.notify(element, 1);
+    expect(callback).not.toHaveBeenCalled();
+    instances[1]?.notify(element, 1);
+    expect(callback).toHaveBeenCalledTimes(1);
+    m.destroy();
+  });
+});
