@@ -135,13 +135,23 @@ class Medusa {
     const mode = config.mode ?? MODE.DEFAULT;
     const emit = config.emit ?? false;
     const bubbles = config.bubbles ?? false;
-    const minThreshold = Array.isArray(threshold) ? Math.min(...threshold) : threshold;
+    let minThreshold = 0;
+    if (typeof threshold === 'number') {
+      minThreshold = threshold;
+    } else if (threshold.length > 0) {
+      minThreshold = Math.min(...threshold);
+    }
     const userCallback = config.callback;
 
     const instance = new IntersectionObserver((entries, observer) => {
       const isOnceMode = mode === MODE.ONCE;
       for (const entry of entries) {
         const { target } = entry;
+        // Ignore queued notifications from removed or replaced observers/targets.
+        if (this.#observers.get(config.id)?.instance !== observer || !observedNodes.has(target)) {
+          // oxlint-disable-next-line no-continue -- discard stale entries without nesting callback delivery
+          continue;
+        }
         const targetCallback = this.#elementObservers.get(target)?.get(config.id) ?? userCallback;
 
         // The initial notification reports any intersection, even below the
