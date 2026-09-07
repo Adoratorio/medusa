@@ -37,7 +37,8 @@ interface MedusaObserverConfig {
   threshold?: number | number[];
   nodes?: Element | Iterable<Element> | null;
   mode?: Mode;
-  emit?: boolean;
+  emit?: boolean;     // dispatch a `medusa-<id>` CustomEvent on the target
+  bubbles?: boolean;  // whether that event bubbles (default false)
   callback?: MedusaCallback;
 }
 
@@ -52,7 +53,7 @@ type MedusaCallback = (
 ```typescript
 const MODE = {
   DEFAULT: 'DEFAULT',    // Trigger on every intersection
-  ONCE: 'ONCE',          // Trigger only once
+  ONCE: 'ONCE',          // Trigger only once, when the (lowest) threshold is reached
   BYPIXELS: 'BYPIXELS',  // Trigger every 1% of intersection (101 thresholds)
 } as const;
 ```

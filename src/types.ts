@@ -21,6 +21,8 @@ export interface MedusaObserverConfig {
   nodes?: Element | Iterable<Element> | null;
   mode?: Mode;
   emit?: boolean;
+  // Whether the emitted `medusa-<id>` events bubble up from the target
+  bubbles?: boolean;
   callback?: MedusaCallback;
 }
 
@@ -29,6 +31,9 @@ export interface MedusaObserver {
   observedNodes: Set<Element>;
   mode: Mode;
   emit: boolean;
+  bubbles: boolean;
+  // Lowest configured threshold: ONCE fires only when it is actually reached
+  minThreshold: number;
   callback?: MedusaCallback | undefined;
 }
 

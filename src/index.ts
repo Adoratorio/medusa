@@ -8,6 +8,8 @@ import {
 } from './types.ts';
 import { THRESHOLDS_BY_PIXELS } from './utils.ts';
 
+const RATIO_TOLERANCE = 1e-6;
+
 class Medusa {
   static readonly MODE: typeof MODE = MODE;
 
@@ -107,9 +109,10 @@ class Medusa {
     this.#cleanupNodeFromObserver(id, node, medusaObserver.observedNodes);
   }
 
-  #emitEventCallback(id: string, entry: IntersectionObserverEntry): void {
+  #emitEventCallback(id: string, entry: IntersectionObserverEntry, bubbles: boolean): void {
     const customEvent: MedusaEvent = new CustomEvent(`medusa-${id}`, {
       detail: entry,
+      bubbles,
     });
     entry.target.dispatchEvent(customEvent);
   }
@@ -120,15 +123,19 @@ class Medusa {
       return;
     }
 
+    const threshold =
+      config.mode === MODE.BYPIXELS ? THRESHOLDS_BY_PIXELS : (config.threshold ?? 0);
     const observerOptions: IntersectionObserverInit = {
       root: config.root ?? null,
       rootMargin: config.rootMargin ?? '0px 0px 0px 0px',
-      threshold: config.mode === MODE.BYPIXELS ? THRESHOLDS_BY_PIXELS : (config.threshold ?? 0),
+      threshold,
     };
 
     const observedNodes = new Set<Element>();
     const mode = config.mode ?? MODE.DEFAULT;
     const emit = config.emit ?? false;
+    const bubbles = config.bubbles ?? false;
+    const minThreshold = Array.isArray(threshold) ? Math.min(...threshold) : threshold;
     const userCallback = config.callback;
 
     const instance = new IntersectionObserver((entries, observer) => {
@@ -137,14 +144,18 @@ class Medusa {
         const { target } = entry;
         const targetCallback = this.#elementObservers.get(target)?.get(config.id) ?? userCallback;
 
-        if (isOnceMode && entry.isIntersecting) {
+        // The initial notification reports any intersection, even below the
+        // configured threshold: ONCE must wait for the threshold to be reached
+        const reached = isOnceMode ? this.#hasReached(entry, minThreshold) : true;
+
+        if (isOnceMode && reached) {
           observer.unobserve(target);
           this.#cleanupNodeFromObserver(config.id, target, observedNodes);
         }
 
-        if (!isOnceMode || entry.isIntersecting) {
+        if (reached) {
           if (emit) {
-            this.#emitEventCallback(config.id, entry);
+            this.#emitEventCallback(config.id, entry, bubbles);
           }
           if (targetCallback) {
             targetCallback(entry, observer);
@@ -158,6 +169,8 @@ class Medusa {
       observedNodes,
       mode,
       emit,
+      bubbles,
+      minThreshold,
       callback: userCallback,
     };
     this.#observers.set(config.id, medusaObserver);
@@ -165,6 +178,11 @@ class Medusa {
     if (config.nodes) {
       this.observe(config.id, config.nodes);
     }
+  }
+
+  // Ratios reported at a crossing can sit a hair below the threshold
+  #hasReached(entry: IntersectionObserverEntry, minThreshold: number): boolean {
+    return entry.isIntersecting && entry.intersectionRatio + RATIO_TOLERANCE >= minThreshold;
   }
 
   #validateObserverConfig(config: MedusaObserverConfig): boolean {
@@ -218,7 +236,10 @@ class Medusa {
       return;
     }
 
-    this.clearObserver(observerId);
+    // `disconnect` unobserves everything at once; only the bookkeeping is per node
+    for (const node of observer.observedNodes) {
+      this.#cleanupNodeFromObserver(observerId, node, observer.observedNodes);
+    }
     observer.instance.disconnect();
     this.#observers.delete(observerId);
   }
