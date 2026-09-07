@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import Medusa from '../src/index.ts';
+import Medusa, { MODE } from '../src/index.ts';
 
 type Callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void;
 
@@ -56,7 +56,7 @@ describe('Medusa ONCE mode', () => {
   it('waits for the configured threshold instead of any intersection', () => {
     const callback = vi.fn();
     const medusa = new Medusa({
-      observers: [{ id: 'lazy', mode: Medusa.MODE.ONCE, threshold: 0.5, nodes: element, callback }],
+      observers: [{ id: 'lazy', mode: MODE.ONCE, threshold: 0.5, nodes: element, callback }],
     });
     const [observer] = instances;
     expect(observer?.observed.has(element)).toBe(true);
@@ -74,11 +74,12 @@ describe('Medusa ONCE mode', () => {
 
   it('uses the lowest threshold of a list', () => {
     const callback = vi.fn();
-    new Medusa({
+    const medusa = new Medusa({
       observers: [
-        { id: 'multi', mode: Medusa.MODE.ONCE, threshold: [0.75, 0.25], nodes: element, callback },
+        { id: 'multi', mode: MODE.ONCE, threshold: [0.75, 0.25], nodes: element, callback },
       ],
     });
+    expect(medusa.getObserver('multi')?.minThreshold).toBe(0.25);
     const [observer] = instances;
     observer?.notify(element, 0.1);
     expect(callback).not.toHaveBeenCalled();
@@ -112,18 +113,20 @@ describe('Medusa DEFAULT mode and events', () => {
     element.addEventListener('medusa-quiet', targetListener);
     element.addEventListener('medusa-loud', targetListener);
 
-    new Medusa({
+    const medusa = new Medusa({
       observers: [
         { id: 'quiet', emit: true, nodes: element },
         { id: 'loud', emit: true, bubbles: true, nodes: element },
       ],
     });
+    expect(medusa.getObserver('loud')?.bubbles).toBe(true);
     instances[0]?.notify(element, 1);
     instances[1]?.notify(element, 1);
 
     expect(targetListener).toHaveBeenCalledTimes(2);
     expect(parentListener).toHaveBeenCalledTimes(1);
-    expect((parentListener.mock.calls[0]?.[0] as CustomEvent).type).toBe('medusa-loud');
+    const [bubbled] = parentListener.mock.calls[0] ?? [];
+    expect((bubbled as CustomEvent).type).toBe('medusa-loud');
   });
 });
 
