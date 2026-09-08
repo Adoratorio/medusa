@@ -6,6 +6,8 @@ This file records changes from 5.0.0 onward. See [GitHub releases](https://githu
 
 ### Documentation
 
+- Restore observer defaults, optional per-element callbacks, management methods and event semantics in the README.
+
 - Refine contributor guidance and release notes; consolidate maintainer contacts in the README.
 
 ## [5.0.0](https://github.com/Adoratorio/medusa/releases/tag/v5.0.0) — 2026-09-08
