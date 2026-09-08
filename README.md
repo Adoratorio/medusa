@@ -1,6 +1,6 @@
 # Medusa
 
-A lightweight, SSR-friendly utility for managing multiple `IntersectionObserver` instances with TypeScript support. Ideal for lazy loading, animations, and viewport-based triggers.
+Manage intersection observers for lazy loading, animations and viewport interactions.
 
 ## Installation
 
@@ -103,13 +103,27 @@ element.addEventListener('medusa-myObserver', (e) => {
 
 ## TypeScript Support
 
-Medusa is written in TypeScript and includes full type definitions, making it completely type-safe out of the box.
+Medusa is written in TypeScript and includes type declarations for its public API.
 
-## Maintenance and compatibility
+## Compatibility
 
-See [MAINTAINERS.md](MAINTAINERS.md), [CONTRIBUTING.md](CONTRIBUTING.md) and
-[CHANGELOG.md](CHANGELOG.md). Historical contributor credits are retained.
-The CI runtime is Node 24; DOM instances are client-only. Imports are SSR-safe.
-The runtime expects native ES2023 support; TypeScript does not provide browser
-polyfills. DOM functionality uses requestAnimationFrame, Pointer/Touch Events
-and observers where applicable. Test the target browser matrix before release.
+Imports and construction are safe during server-side rendering. Observer creation is skipped when `IntersectionObserver` is unavailable; set up observers on the client after mounting. The package targets ES2023 and does not include polyfills.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, checks and pull requests.
+Version history is documented in the [changelog](CHANGELOG.md) and [GitHub releases](https://github.com/Adoratorio/medusa/releases).
+
+## Maintainers
+
+Maintained by [Adoratorio](https://github.com/Adoratorio).
+
+- [Andrea Gottardi](https://github.com/AndreaGottardi)
+- [Daniele Borra](https://github.com/borradaniele)
+- [Andrea Biason](https://github.com/biazo5)
+
+Contributor credits are preserved in [package.json](package.json) and the Git history.
+
+## License
+
+[MIT](LICENSE).
